@@ -36,8 +36,7 @@ stampa_conti_rapidi([conto(Num, Int, _, _) | Rest], Contatore) :- Contatore mod 
                                                                   format('[~w|~w]', [Num, Int]), nl,
                                                                   NuovoContatore is Contatore + 1,
                                                                   stampa_conti_rapidi(Rest, NuovoContatore).
-stampa_conti_rapidi([conto(Num, Int, _, _) | Rest], Contatore) :- format('[~w|~w]', [Num, Int]),
-                                                                  write('    '),
+stampa_conti_rapidi([conto(Num, Int, _, _) | Rest], Contatore) :- format('[~w|~w]\t', [Num, Int]),
                                                                   NuovoContatore is Contatore + 1,
                                                                   stampa_conti_rapidi(Rest, NuovoContatore).
 
@@ -53,7 +52,7 @@ stampa_storico([trans(Imp, Tipo) | Rest]) :- format('  - ~w: ~2f euro~n', [Tipo,
 
 stampa_risultato_filtro([]) :- write('  Nessun conto soddisfa il criterio di ricerca'), nl.
 stampa_risultato_filtro(Conti) :- Conti = [_ | _],
-                                  stampa_conti(Conti).
+                                  stampa_conti_dettaglio(Conti).
 
 /* Il predicato menu gestisce le operazioni richieste dall'utente:
    - il suo unico argomento è la lista dei conti corrente. */
@@ -153,6 +152,7 @@ stampa_menu(Conti) :- nl,
                       write('5. Ricerca per saldo'), nl,
                       write('6. Visualizza tutti i saldi'), nl,
                       write('7. Esci'), nl, nl,
+                      write('Conti disponibili: '), nl,
                       stampa_conti_rapidi(Conti), nl.
 
 /* Il predicato leggi_scelta_operazione legge la scelta dell'utente:

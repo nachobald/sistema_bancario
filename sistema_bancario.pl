@@ -3,7 +3,9 @@
 main :- nl,
         write('--- BENVENUTO NEL SISTEMA BANCARIO ---'), nl,
         leggi_numero_conti(N),
-        crea_conti(N, 1, [], Conti),
+        crea_conti(N, 1, [], Conti), nl,
+        write('Conti creati:'), nl,
+        stampa_conti_dettaglio(Conti),
         menu(Conti).
 
 /* Il predicato leggi_numero_conti legge il numero di conti da creare:
@@ -16,12 +18,28 @@ leggi_numero_conti(N) :- write('Quanti conti vuoi creare? '),
 leggi_numero_conti(N) :- write('ERRORE: inserire un numero intero positivo.'), nl,
                          leggi_numero_conti(N).
 
-/* Il predicato stampa_conti stampa in modo leggibile l'elenco dei conti:
-   - il suo unico argomento è la lista dei conti da stampare. */
+/* Il predicato stampa_conti_dettaglio stampa l'elenco dei conti con tutti i relativi dettagli:
+   - il suo unico argomento è la lista dei conti da stampare */
 
-stampa_conti([]).
-stampa_conti([conto(Num, Int, Saldo, _) | Rest]) :- format('  - Conto ~w (~w): saldo = ~2f~n', [Num, Int, Saldo]),
-                                                    stampa_conti(Rest).
+stampa_conti_dettaglio([]).
+stampa_conti_dettaglio([conto(Num, Int, Saldo, _) | Rest]) :- format('  - Conto ~w (~w): saldo = ~2f~n', [Num, Int, Saldo]),
+                                                             stampa_conti_dettaglio(Rest).
+
+/* Il predicato stampa_conti_rapidi stampa un riepilogo essenziale dei conti utili per le operazioni:
+   - il suo unico argomento è la lista dei conti da stampare
+   Dopo 5 conti va a capo per una migliore leggibilità */
+
+stampa_conti_rapidi(Conti) :- stampa_conti_rapidi(Conti, 1).
+stampa_conti_rapidi([], _) :- nl.
+stampa_conti_rapidi([conto(Num, Int, _, _)], _) :- format('[~w|~w]', [Num, Int]), nl.
+stampa_conti_rapidi([conto(Num, Int, _, _) | Rest], Contatore) :- Contatore mod 5 =:= 0,
+                                                                  format('[~w|~w]', [Num, Int]), nl,
+                                                                  NuovoContatore is Contatore + 1,
+                                                                  stampa_conti_rapidi(Rest, NuovoContatore).
+stampa_conti_rapidi([conto(Num, Int, _, _) | Rest], Contatore) :- format('[~w|~w]', [Num, Int]),
+                                                                  write('    '),
+                                                                  NuovoContatore is Contatore + 1,
+                                                                  stampa_conti_rapidi(Rest, NuovoContatore).
 
 /* Il predicato stampa_storico stampa in modo leggibile l'elenco delle transazioni:
    - il suo unico argomento è la lista delle transazioni da stampare. */
@@ -33,7 +51,7 @@ stampa_storico([trans(Imp, Tipo) | Rest]) :- format('  - ~w: ~2f euro~n', [Tipo,
 /* Il predicato stampa_risultato_filtro stampa l'elenco dei conti con saldo superiore alla soglia:
    - il suo unico argomento è la lista dei conti da stampare. */
 
-stampa_risultato_filtro([]) :- write('  Nessun conto trovato.'), nl.
+stampa_risultato_filtro([]) :- write('  Nessun conto soddisfa il criterio di ricerca'), nl.
 stampa_risultato_filtro(Conti) :- Conti = [_ | _],
                                   stampa_conti(Conti).
 
@@ -46,44 +64,48 @@ menu(Conti) :- leggi_scelta(Conti, Scelta),
 /* Il predicato gestisci_scelta gestisce la scelta dell'utente:
    - il suo primo argomento è la scelta effettuata;
    - il suo secondo argomento è la lista dei conti corrente.
-   La scelta 6 termina il programma; le altre eseguono l'operazione corrispondente. */
+   La scelta 7 termina il programma; le altre eseguono l'operazione corrispondente. */
 
-gestisci_scelta(6, _) :- nl, write('Arrivederci!'), nl.
-gestisci_scelta(Scelta, Conti) :- Scelta \= 6,
+gestisci_scelta(7, _) :- nl, write('Arrivederci!'), nl.
+gestisci_scelta(Scelta, Conti) :- Scelta \= 7,
                                   esegui(Scelta, Conti, ContiNuovi),
                                   menu(ContiNuovi).
 
 /* Il predicato esegui esegue l'operazione corrispondente alla scelta dell'utente:
-   - il suo primo argomento è il numero dell'operazione (1-6);
+   - il suo primo argomento è il numero dell'operazione (1-7);
    - il suo secondo argomento è la lista dei conti corrente;
    - il suo terzo argomento (nel risultato) è la lista dei conti aggiornata.
    Le operazioni 4, 5 e 6 non modificano la lista dei conti. */
 
-esegui(1, Conti, ContiNuovi) :- nl, write('--- DEPOSITO ---'), nl,
-                                leggi_numero_conto('Numero conto: ', Num, Conti),
+esegui(1, Conti, ContiNuovi) :- nl, 
+                                write('--- DEPOSITO ---'), nl,
+                                leggi_id_conto('Numero conto: ', Conti, Num),
                                 leggi_importo_positivo('Importo da depositare: ', Importo),
                                 deposita(Num, Importo, Conti, ContiNuovi),
-                                format('Deposito di ~2f effettuato sul conto numero ~w.~n', [Importo, Num]).
-    
-esegui(2, Conti, ContiNuovi) :- nl, write('--- PRELIEVO ---'), nl,
-                                leggi_numero_conto('Numero conto: ', Num, Conti),
+                                format('Deposito di ~2f effettuato sul conto numero ~w.~n', [Importo, Num]). 
+esegui(2, Conti, ContiNuovi) :- nl, 
+                                write('--- PRELIEVO ---'), nl,
+                                leggi_id_conto('Numero conto: ', Conti, Num),
                                 saldo(Num, Conti, Saldo),
                                 gestisci_prelievo(Saldo, Num, Conti, ContiNuovi).
-
-esegui(3, Conti, ContiNuovi) :- nl, write('--- BONIFICO ---'), nl,
-                                leggi_numero_conto('Conto ordinante: ', NumS, Conti),
+esegui(3, Conti, ContiNuovi) :- nl, 
+                                write('--- BONIFICO ---'), nl,
+                                leggi_id_conto('Conto ordinante: ', Conti, NumS),
                                 saldo(NumS, Conti, SaldoS),
                                 gestisci_bonifico(SaldoS, NumS, Conti, ContiNuovi).
-
-esegui(4, Conti, Conti) :- nl, write('--- MOVIMENTI DEL CONTO ---'), nl,
-                           leggi_numero_conto('Numero conto: ', Num, Conti),
+esegui(4, Conti, Conti) :- nl, 
+                           write('--- MOVIMENTI DEL CONTO ---'), nl,
+                           leggi_id_conto('Numero conto: ', Conti, Num),
                            storico(Num, Conti, Transazioni),
                            stampa_storico(Transazioni).
-
-esegui(5, Conti, Conti) :- nl, write('--- RICERCA PER SALDO ---'), nl,
-                           leggi_numero('Mostra i conti con saldo maggiore di: ', Soglia),
+esegui(5, Conti, Conti) :- nl, 
+                           write('--- RICERCA PER SALDO ---'), nl,
+                           leggi_soglia_saldo('Mostra i conti con saldo maggiore di: ', Soglia),
                            filtra_per_saldo(Soglia, Conti, ContiFiltrati),
                            stampa_risultato_filtro(ContiFiltrati).
+esegui(6, Conti, Conti) :- nl, 
+                           write('--- SALDI COMPLETI ---'), nl,
+                           stampa_conti_dettaglio(Conti).
 
 /* Il predicato gestisci_prelievo gestisce il prelievo controllando il saldo:
    - il suo primo argomento è il saldo disponibile;
@@ -107,32 +129,42 @@ gestisci_prelievo(Saldo, Num, Conti, ContiNuovi) :- Saldo > 0,
 gestisci_bonifico(SaldoS, _, Conti, Conti) :- SaldoS =:= 0,
                                               write('Saldo 0: impossibile eseguire bonifico.'), nl.
 gestisci_bonifico(SaldoS, NumS, Conti, ContiNuovi) :- SaldoS > 0,
-                                                      leggi_numero_conto_destinatario('Conto benificiario: ', NumS, NumD, Conti),
+                                                      leggi_conto_destinatario('Conto beneficiario: ', NumS, Conti, NumD),
                                                       leggi_importo_valido('Importo del bonifico: ', SaldoS, Importo),
                                                       bonifico(NumS, NumD, Importo, Conti, ContiNuovi),
                                                       format('Bonifico di euro ~2f dal conto ~w al conto ~w effettuato.~n', [Importo, NumS, NumD]).
 
-/* Il predicato leggi_scelta mostra i conti disponibili e il menu,
-   poi legge l'operazione scelta dall'utente:
+/* Il predicato leggi_scelta mostra il menu e i conti, poi avvia la lettura:
    - il suo primo argomento è la lista dei conti corrente;
-   - il suo secondo argomento (nel risultato) è il numero della scelta. */
+   - il suo secondo argomento (nel risultato) è la scelta dell'utente. */
 
-leggi_scelta(Conti, Scelta) :- nl,
-                               write('--- SALDI CORRENTI ---'), nl,
-                               stampa_conti(Conti), nl,
-                               write('--- MENU ---'), nl,
-                               write('1. Deposita'), nl,
-                               write('2. Preleva'), nl,
-                               write('3. Bonifico'), nl,
-                               write('4. Movimenti del conto'), nl,
-                               write('5. Ricerca per saldo'), nl,
-                               write('6. Esci'), nl, nl,
-                               write('Scegli operazione (digita 1-6): '),
-                               read(Scelta),
-                               integer(Scelta),
-                               Scelta >= 1, Scelta =< 6, !.
-leggi_scelta(Conti, Scelta) :- write('ERRORE: scegliere un numero tra 1 e 6.'), nl,
-                               leggi_scelta(Conti, Scelta).
+leggi_scelta(Conti, Scelta) :- stampa_menu(Conti),
+                               leggi_scelta_operazione(Conti, Scelta).
+
+/* Il predicato stampa_menu stampa il menu delle operazioni e i conti disponibili con cui operare:
+   - il suo unico argomento è la lista dei conti corrente */
+
+stampa_menu(Conti) :- nl,
+                      write('--- MENU ---'), nl,
+                      write('1. Deposita'), nl,
+                      write('2. Preleva'), nl,
+                      write('3. Bonifico'), nl,
+                      write('4. Movimenti del conto'), nl,
+                      write('5. Ricerca per saldo'), nl,
+                      write('6. Visualizza tutti i saldi'), nl,
+                      write('7. Esci'), nl, nl,
+                      stampa_conti_rapidi(Conti), nl.
+
+/* Il predicato leggi_scelta_operazione legge la scelta dell'utente:
+   - il suo primo argomento è la lista dei conti corrente
+   - il suo secondo argomento (nel risultato) è il numero della scelta valida effettuata */
+
+leggi_scelta_operazione(Conti, Scelta) :- write('Scegli operazione (digita 1-7): '),
+                                          read(Scelta),
+                                          integer(Scelta),
+                                          Scelta >= 1, Scelta =< 7, !.
+leggi_scelta_operazione(Conti, Scelta) :- write('ERRORE: inserire un numero tra 1 e 7.'), nl,
+                                          leggi_scelta_operazione(Conti, Scelta).
 
 /* Il predicato leggi_importo_positivo legge un importo positivo:
    - il suo primo argomento è il messaggio da mostrare all'utente;
@@ -158,15 +190,16 @@ leggi_importo_valido(Messaggio, Massimo, Importo) :- write(Messaggio),
 leggi_importo_valido(Messaggio, Massimo, Importo) :- format('ERRORE: inserire un valore maggiore di 0 e minore o uguale a ~2f.~n', [Massimo]),
                                                      leggi_importo_valido(Messaggio, Massimo, Importo).
 
-/* Il predicato leggi_numero legge un numero qualsiasi:
+/* Il predicato leggi_soglia_saldo legge un numero non negativo per la ricerca per saldo:
    - il suo primo argomento è il messaggio da mostrare all'utente;
    - il suo secondo argomento (nel risultato) è il numero letto. */
 
-leggi_numero(Messaggio, Importo) :- write(Messaggio),
-                                    read(Importo),
-                                    number(Importo), !.
-leggi_numero(Messaggio, Importo) :- write('ERRORE: inserire un numero valido.'), nl,
-                                               leggi_numero(Messaggio, Importo).
+leggi_soglia_saldo(Messaggio, Importo) :- write(Messaggio),
+                                          read(Importo),
+                                          number(Importo),
+                                          Importo >= 0, !.
+leggi_soglia_saldo(Messaggio, Importo) :- write('ERRORE: inserire un numero non negativo'), nl,
+                                          leggi_soglia_saldo(Messaggio, Importo).
 
 /* Il predicato leggi_intestatario legge un intestatario valido:
    - il suo unico argomento (nel risultato) è l'intestatario letto. */
@@ -176,32 +209,32 @@ leggi_intestatario(Int) :- read(Int),
 leggi_intestatario(Int) :- write('ERRORE: intestatario non valido (deve contenere almeno una lettera).'), nl,
                            leggi_intestatario(Int).
 
-/* Il predicato leggi_numero_conto legge un numero di conto esistente:
+/* Il predicato leggi_id_conto legge un numero di conto esistente:
    - il suo primo argomento è il messaggio da mostrare all'utente;
-   - il suo secondo argomento (nel risultato) è il numero letto;
-   - il suo terzo argomento è la lista dei conti. */
+   - il suo secondo argomento è la lista dei conti;
+   - il suo terzo argomento (nel risultato) è il numero del conto letto. */
 
-leggi_numero_conto(Messaggio, Num, Conti) :- write(Messaggio),
-                                             read(Num),
-                                             integer(Num),
-                                             esiste_conto(Num, Conti), !.
-leggi_numero_conto(Messaggio, Num, Conti) :- write('ERRORE: conto inesistente.'), nl,
-                                             leggi_numero_conto(Messaggio, Num, Conti).
+leggi_id_conto(Messaggio, Conti, Num) :- write(Messaggio),
+                                         read(Num),
+                                         integer(Num),
+                                         esiste_conto(Num, Conti), !.
+leggi_id_conto(Messaggio, Conti, Num) :- write('ERRORE: conto inesistente.'), nl,
+                                         leggi_id_conto(Messaggio, Conti, Num).
 
-/* Il predicato leggi_numero_conto_destinatario legge un conto destinatario:
+/* Il predicato leggi_conto_destinatario legge un conto destinatario:
    - il suo primo argomento è il messaggio da mostrare all'utente;
    - il suo secondo argomento è il numero del conto sorgente;
-   - il suo terzo argomento (nel risultato) è il numero del conto destinatario letto;
-   - il suo quarto argomento è la lista dei conti.
+   - il suo terzo argomento è la lista dei conti;
+   - il suo quarto argomento (nel risultato) è il numero del conto destinatario letto.
    Il conto destinatario deve essere esistente e diverso dal conto sorgente. */
 
-leggi_numero_conto_destinatario(Messaggio, NumS, NumD, Conti) :- write(Messaggio),
-                                                                 read(NumD),
-                                                                 integer(NumD),
-                                                                 esiste_conto(NumD, Conti),
-                                                                 NumD \= NumS, !.
-leggi_numero_conto_destinatario(Messaggio, NumS, NumD, Conti) :- write('ERRORE: conto inesistente o coincidente con il conto ordinante.'), nl,
-                                                                 leggi_numero_conto_destinatario(Messaggio, NumS, NumD, Conti).
+leggi_conto_destinatario(Messaggio, NumS, Conti, NumD) :- write(Messaggio),
+                                                          read(NumD),
+                                                          integer(NumD),
+                                                          esiste_conto(NumD, Conti),
+                                                          NumD \= NumS, !.
+leggi_conto_destinatario(Messaggio, NumS, Conti, NumD) :- write('ERRORE: conto inesistente o coincidente con il conto ordinante.'), nl,
+                                                          leggi_conto_destinatario(Messaggio, NumS, Conti, NumD).
 
 /* Il predicato esiste_conto verifica se un conto è presente nella lista:
    - il suo primo argomento è il numero del conto da cercare;

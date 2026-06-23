@@ -117,7 +117,7 @@ gestisci_prelievo(Saldo, _, Conti, Conti) :- Saldo =:= 0,
 gestisci_prelievo(Saldo, Num, Conti, ContiNuovi) :- Saldo > 0,
                                                     leggi_importo_valido('Importo da prelevare: ', Saldo, Importo),
                                                     preleva(Num, Importo, Conti, ContiNuovi),
-                                                    format('Prelievo di ~2f effettuato sul conto numero ~w.~n', [Importo, Num]).
+                                                    format('Prelievo di ~2f effettuato dal conto numero ~w.~n', [Importo, Num]).
 
 /* Il predicato gestisci_bonifico gestisce il bonifico controllando il saldo:
    - il suo primo argomento è il saldo del conto sorgente;

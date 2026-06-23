@@ -87,6 +87,9 @@ esegui(2, Conti, ContiNuovi) :- nl,
                                 leggi_id_conto('Numero conto: ', Conti, Num),
                                 saldo(Num, Conti, Saldo),
                                 gestisci_prelievo(Saldo, Num, Conti, ContiNuovi).
+esegui(3, Conti, ContiNuovi) :- length(Conti, N),
+                                N =:= 1,
+                                write('ERRORE: impossibile eseguire bonifico con un solo conto.'), nl.                                
 esegui(3, Conti, ContiNuovi) :- nl, 
                                 write('--- BONIFICO ---'), nl,
                                 leggi_id_conto('Conto ordinante: ', Conti, NumS),
@@ -127,6 +130,9 @@ gestisci_prelievo(Saldo, Num, Conti, ContiNuovi) :- Saldo > 0,
 
 gestisci_bonifico(SaldoS, _, Conti, Conti) :- SaldoS =:= 0,
                                               write('Saldo 0: impossibile eseguire bonifico.'), nl.
+/*gestisci_bonifico(SaldoS, _, Conti, Conti) :- length(Conti, N),
+                                              N =:= 1,
+                                              write('ERRORE: impossibile eseguire bonifico con un solo conto.'), nl.        */                                       
 gestisci_bonifico(SaldoS, NumS, Conti, ContiNuovi) :- SaldoS > 0,
                                                       leggi_conto_destinatario('Conto beneficiario: ', NumS, Conti, NumD),
                                                       leggi_importo_valido('Importo del bonifico: ', SaldoS, Importo),
@@ -206,7 +212,8 @@ leggi_soglia_saldo(Messaggio, Importo) :- write('ERRORE: inserire un numero non 
 
 leggi_intestatario(Int) :- read(Int),
                            valido_intestatario(Int), !.
-leggi_intestatario(Int) :- write('ERRORE: intestatario non valido (deve contenere almeno una lettera).'), nl,
+leggi_intestatario(Int) :- write('ERRORE: intestatario non valido (deve contenere almeno una lettera).'),nl,
+                           write('Inserisci nuovamente l''intestatario: '),
                            leggi_intestatario(Int).
 
 /* Il predicato leggi_id_conto legge un numero di conto esistente:
@@ -325,19 +332,6 @@ cerca_conto(Num, [conto(Num, Int, Saldo, Trans) | Rest], conto(Num, Int, Saldo, 
 cerca_conto(Num, [C | Rest], Conto, [C | Resto]) :- C = conto(N, _, _, _),
                                                     N \= Num,
                                                     cerca_conto(Num, Rest, Conto, Resto).
-
-/* Il predicato crea_conto aggiunge un nuovo conto con saldo zero e transazioni vuote:
-   - il suo primo argomento è il numero del nuovo conto;
-   - il suo secondo argomento è l'intestatario del nuovo conto;
-   - il suo terzo argomento è la lista dei conti corrente;
-   - il suo quarto argomento (nel risultato) è la lista dei conti aggiornata.
-   Il predicato fallisce se il numero di conto esiste già o se gli argomenti non sono validi. */
-
-crea_conto(Num, Int, [], [conto(Num, Int, 0, [])]) :- integer(Num), 
-                                                      Num > 0, 
-                                                      atom(Int).
-crea_conto(Num, _, [conto(Num, _, _, _) | _], _) :- !, fail.
-crea_conto(Num, Int, [C | Rest], [C | NuovoRest]) :- crea_conto(Num, Int, Rest, NuovoRest).
 
 /* Il predicato deposita aggiunge un importo positivo al saldo del conto specificato:
    - il suo primo argomento è il numero del conto su cui depositare;

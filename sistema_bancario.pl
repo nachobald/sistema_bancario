@@ -129,10 +129,7 @@ gestisci_prelievo(Saldo, Num, Conti, ContiNuovi) :- Saldo > 0,
    - il suo quarto argomento (nel risultato) è la lista dei conti aggiornata. */
 
 gestisci_bonifico(SaldoS, _, Conti, Conti) :- SaldoS =:= 0,
-                                              write('Saldo 0: impossibile eseguire bonifico.'), nl.
-/*gestisci_bonifico(SaldoS, _, Conti, Conti) :- length(Conti, N),
-                                              N =:= 1,
-                                              write('ERRORE: impossibile eseguire bonifico con un solo conto.'), nl.        */                                       
+                                              write('Saldo 0: impossibile eseguire bonifico.'), nl.                                       
 gestisci_bonifico(SaldoS, NumS, Conti, ContiNuovi) :- SaldoS > 0,
                                                       leggi_conto_destinatario('Conto beneficiario: ', NumS, Conti, NumD),
                                                       leggi_importo_valido('Importo del bonifico: ', SaldoS, Importo),

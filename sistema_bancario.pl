@@ -74,19 +74,22 @@ gestisci_scelta(Scelta, Conti) :- Scelta \= 7,
    - il suo primo argomento è il numero dell'operazione (1-7);
    - il suo secondo argomento è la lista dei conti corrente;
    - il suo terzo argomento (nel risultato) è la lista dei conti aggiornata.
-   Le operazioni 4, 5 e 6 non modificano la lista dei conti. */
+   Le operazioni 4, 5 e 6 sono di sola lettura e lasciano invariata la lista. */
 
+/* Operazione 1: Deposito */
 esegui(1, Conti, ContiNuovi) :- nl, 
                                 write('--- DEPOSITO ---'), nl,
                                 leggi_id_conto('Numero conto: ', Conti, Num),
                                 leggi_importo_positivo('Importo da depositare: ', Importo),
                                 deposita(Num, Importo, Conti, ContiNuovi),
                                 format('Deposito di ~2f effettuato sul conto numero ~w.~n', [Importo, Num]). 
+/* Operazione 2: Prelievo */
 esegui(2, Conti, ContiNuovi) :- nl, 
                                 write('--- PRELIEVO ---'), nl,
                                 leggi_id_conto('Numero conto: ', Conti, Num),
                                 saldo(Num, Conti, Saldo),
                                 gestisci_prelievo(Saldo, Num, Conti, ContiNuovi).
+/* Operazione 3: Bonifico */
 esegui(3, Conti, ContiNuovi) :- length(Conti, N),
                                 N =:= 1,
                                 write('ERRORE: impossibile eseguire bonifico con un solo conto.'), nl.                                
@@ -95,16 +98,19 @@ esegui(3, Conti, ContiNuovi) :- nl,
                                 leggi_id_conto('Conto ordinante: ', Conti, NumS),
                                 saldo(NumS, Conti, SaldoS),
                                 gestisci_bonifico(SaldoS, NumS, Conti, ContiNuovi).
+/* Operazione 4: Movimenti del conto */
 esegui(4, Conti, Conti) :- nl, 
                            write('--- MOVIMENTI DEL CONTO ---'), nl,
                            leggi_id_conto('Numero conto: ', Conti, Num),
                            storico(Num, Conti, Transazioni),
                            stampa_storico(Transazioni).
+/* Operazione 5: Ricerca per saldo */
 esegui(5, Conti, Conti) :- nl, 
                            write('--- RICERCA PER SALDO ---'), nl,
                            leggi_soglia_saldo('Mostra i conti con saldo maggiore di: ', Soglia),
                            filtra_per_saldo(Soglia, Conti, ContiFiltrati),
                            stampa_risultato_filtro(ContiFiltrati).
+/* Operazione 6: Saldi completi */
 esegui(6, Conti, Conti) :- nl, 
                            write('--- SALDI COMPLETI ---'), nl,
                            stampa_conti_dettaglio(Conti).

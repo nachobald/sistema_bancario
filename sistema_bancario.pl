@@ -189,8 +189,8 @@ leggi_importo_valido(Messaggio, Massimo, Importo) :- write(Messaggio),
                                                      read(Importo),
                                                      number(Importo),
                                                      Importo > 0,
-                                                     Importo =< Massimo, !.
-leggi_importo_valido(Messaggio, Massimo, Importo) :- format('ERRORE: inserire un valore maggiore di 0 e minore o uguale a ~2f.~n', [Massimo]),
+                                                     Importo < Massimo, !.
+leggi_importo_valido(Messaggio, Massimo, Importo) :- format('ERRORE: inserire un valore maggiore di 0 e minore di ~2f.~n', [Massimo]),
                                                      leggi_importo_valido(Messaggio, Massimo, Importo).
 
 /* Il predicato leggi_soglia_saldo legge un numero non negativo per la ricerca per saldo:

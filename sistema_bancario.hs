@@ -47,8 +47,8 @@ leggiNumeroConti = do putStr "Quanti conti vuoi creare? "
                                   leggiNumeroConti
 
 {- La funzione stampaContiDettaglio stampa l'elenco dei conti con tutti i dettagli:
-   - il suo unico argomento è la lista dei conti da stampare
-   Per ogni conto mostra: numero, intestatario e saldo -}
+   - il suo unico argomento è la lista dei conti da stampare.
+   Per ogni conto mostra: numero, intestatario e saldo. -}
 
 stampaContiDettaglio :: [Conto] -> IO ()
 stampaContiDettaglio [] = return ()
@@ -162,7 +162,7 @@ esegui 4 conti = do putStrLn ""
 -- Operazione 5: Ricerca per saldo
 esegui 5 conti = do putStrLn ""
                     putStrLn "--- RICERCA PER SALDO ---"
-                    soglia <- leggiSogliaSaldo "Mostra i conti con saldo maggiore di: "
+                    soglia <- leggiSogliaSaldo "Mostra i conti con saldo maggiore di euro: "
                     stampaRisultatoFiltro (filtraPerSaldo soglia conti)
                     return conti
 -- Operazione 6: Saldi completi
@@ -322,7 +322,7 @@ leggiContoDestinatario msg numS conti = do putStr msg
 {- La funzione esisteConto verifica se un conto è presente nella lista:
    - il primo argomento è il numero del conto da cercare;
    - il secondo argomento è la lista dei conti.
-   Il risultato è True se il conto esiste, False altrimenti -}
+   Il risultato è True se il conto esiste, False altrimenti. -}
 
 esisteConto :: Int -> [Conto] -> Bool
 esisteConto _ [] = False
@@ -333,10 +333,11 @@ esisteConto num (Conto n _ _ _ : rest) | num == n  = True
    - il primo argomento è il numero di conti ancora da creare;
    - il secondo argomento è il contatore per la numerazione progressiva;
    - il terzo argomento è la lista dei conti accumulata;
-   - il suo quarto argomento (nel risultato) è la lista dei conti completa. -}
+   - il suo quarto argomento (nel risultato) è la lista dei conti completa. 
+   L'uso di reverse consente di stampare in ordine i contri creati. -}
 
 creaConti :: Int -> Int -> [Conto] -> IO [Conto]
-creaConti 0 _ contiAcc = return contiAcc
+creaConti 0 _ contiAcc = return (reverse contiAcc) 
 creaConti n contatore contiAcc = do printf "Inserisci l'intestatario del conto numero %d: " contatore
                                     intestatario <- leggiIntestatario
                                     numero <- generaNumeroCasuale contiAcc
@@ -344,37 +345,61 @@ creaConti n contatore contiAcc = do printf "Inserisci l'intestatario del conto n
                                     creaConti (n - 1) (contatore + 1) (nuovoConto : contiAcc)
 
 {- La funzione generaNumeroCasuale genera un numero di conto casuale non ancora usato:
-   - il suo argomento è la lista dei conti esistenti;
-   - il suo secondo argomento (nel risultato) è il numero generato. -}
+   - il suo unico argomento è la lista dei conti esistenti;
+   - il risultato è il numero generato.
+   I numeri generati sono in ordine crescente: ogni nuovo conto ha un numero maggiore del precedente. -}
 
 generaNumeroCasuale :: [Conto] -> IO Int
-generaNumeroCasuale conti = do tempo <- getPOSIXTime
+generaNumeroCasuale conti = do let ultimo = ultimoNumero conti
+                                   min = ultimo + 1
+                               tempo <- getPOSIXTime
                                let seed = floor (tempo * 1000000)
                                    nextRand = (seed * 1103515245 + 12345) `mod` 2^31
-                                   num = 1000 + (nextRand `mod` 9000)
-                               generaNumeroCasualeTentativo conti num
+                                   num = min + (nextRand `mod` (9000 - min))
+                               generaNumeroCasualeAux conti min num
 
-generaNumeroCasualeTentativo :: [Conto] -> Int -> IO Int
-generaNumeroCasualeTentativo conti num | not (esisteConto num conti) = return num
-                                       | otherwise                   = do tempo <- getPOSIXTime
-                                                                          let seed = floor (tempo * 1000000 + 1)
-                                                                              nextRand = (seed * 1103515245 + 12345) `mod` 2^31
-                                                                              numTempo = 1000 + (nextRand `mod` 9000)
-                                                                          generaNumeroCasualeFallback conti numTempo
+{- La funzione generaNumeroCasualeAux è una funzione ausiliaria che tenta un secondo numero casuale:
+   - il suo primo argomento è la lista dei conti esistenti;
+   - il suo secondo argomento è il valore minimo consentito;
+   - il suo terzo argomento è il numero da verificare.
+   Se il numero è libero lo restituisce, altrimenti tenta con un secondo numero basato sul tempo. -}
 
-generaNumeroCasualeFallback :: [Conto] -> Int -> IO Int
-generaNumeroCasualeFallback conti num | not (esisteConto num conti) = return num
-                                      | otherwise                   = return (generaNumeroSequenziale conti 1000)
+generaNumeroCasualeAux :: [Conto] -> Int -> Int -> IO Int
+generaNumeroCasualeAux conti min num | not (esisteConto num conti) = return num
+                                     | otherwise                   = do tempo <- getPOSIXTime
+                                                                        let seed = floor (tempo * 1000000 + 1)
+                                                                            nextRand = (seed * 1103515245 + 12345) `mod` 2^31
+                                                                            num2 = min + (nextRand `mod` (9000 - min))
+                                                                        generaNumeroCasualeFallback conti min num2
+
+{- La funzione generaNumeroCasualeFallback è una funzione ausiliaria che usa il fallback sequenziale:
+   - il suo primo argomento è la lista dei conti esistenti;
+   - il suo secondo argomento è il valore minimo consentito;
+   - il suo terzo argomento è il numero da verificare.
+   Se il numero è libero lo restituisce, altrimenti usa il generatore sequenziale. -}
+
+generaNumeroCasualeFallback :: [Conto] -> Int -> Int -> IO Int
+generaNumeroCasualeFallback conti min num | not (esisteConto num conti) = return num
+                                          | otherwise                   = return (generaNumeroSequenziale conti min)
+
+{- La funzione ultimoNumero restituisce il numero più alto tra i conti esistenti:
+   - il suo unico argomento è la lista dei conti.
+   Se non ci sono conti, restituisce 999 (così il primo conto parte da 1000) -}
+
+ultimoNumero :: [Conto] -> Int
+ultimoNumero [] = 999
+ultimoNumero conti = maximum [n | Conto n _ _ _ <- conti]
 
 {- La funzione generaNumeroSequenziale genera un numero di conto sequenziale non ancora usato (fallback):
-   - il primo argomento è la lista dei conti esistenti;
-   - il secondo argomento è il tentativo corrente;
-   - il suo terzo argomento (nel risultato) è il numero generato. -}
+   - il suo primo argomento è la lista dei conti esistenti;
+   - il suo secondo argomento è il tentativo corrente (minimo consentito);
+   - il suo terzo argomento (nel risultato) è il numero generato.
+   Viene usata come ultima risorsa quando i numeri casuali generati sono tutti occupati. -}
 
 generaNumeroSequenziale :: [Conto] -> Int -> Int
-generaNumeroSequenziale conti tentativo | tentativo < 10000 && not (esisteConto tentativo conti) = tentativo
-                                        | tentativo < 10000 = generaNumeroSequenziale conti (tentativo + 1)
-                                        | otherwise         = 9999
+generaNumeroSequenziale conti tentativo | tentativo < 9999 && not (esisteConto tentativo conti) = tentativo
+                                        | tentativo < 9999 = generaNumeroSequenziale conti (tentativo + 1)
+                                        | otherwise        = 9999
 
 {- La funzione filtraPerSaldo restituisce la lista dei conti con saldo maggiore della soglia:
    - il primo argomento è la soglia;
@@ -397,7 +422,7 @@ validoIntestatario s = any isAlpha s
 {- La funzione cercaConto cerca un conto per numero all'interno della lista:
    - il primo argomento è il numero del conto da cercare;
    - il secondo argomento è la lista dei conti;
-   - il risultato è una coppia contenente: il conto trovato e la lista rimanente
+   - il risultato è una coppia contenente: il conto trovato e la lista rimanente.
    - restituisce Nothing se il conto non esiste. -}
 
 cercaConto :: Int -> [Conto] -> Maybe (Conto, [Conto])
@@ -474,7 +499,7 @@ bonifico numS numD importo conti =
    - il primo argomento è il numero del conto;
    - il secondo argomento è la lista dei conti;
    - il suo terzo argomento (nel risultato) è il saldo del conto.
-   Restituisce Nothing se il conto non esiste -}
+   Restituisce Nothing se il conto non esiste. -}
 
 saldo :: Int -> [Conto] -> Maybe Double
 saldo _ [] = Nothing
@@ -485,7 +510,7 @@ saldo num (Conto n _ saldoConto _ : rest) | num == n  = Just saldoConto
    - il primo argomento è il numero del conto;
    - il secondo argomento è la lista dei conti;
    - il suo terzo argomento (nel risultato) è la lista delle transazioni.
-   Restituisce Nothing se il conto non esiste -}
+   Restituisce Nothing se il conto non esiste. -}
 
 storico :: Int -> [Conto] -> Maybe [Transazione]
 storico _ [] = Nothing

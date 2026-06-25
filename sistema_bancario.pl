@@ -1,5 +1,12 @@
 /* Programma Prolog per la gestione di un sistema bancario semplice. */
 
+/* La funzione main avvia il programma:
+   - stampa il messaggio di benvenuto;
+   - legge il numero di conti da creare;
+   - crea i conti;
+   - stampa i conti creati;
+   - avvia il menu interattivo. */
+
 main :- nl,
         write('--- BENVENUTO NEL SISTEMA BANCARIO ---'), nl,
         leggi_numero_conti(N),
@@ -110,7 +117,7 @@ esegui(4, Conti, Conti) :- nl,
 /* Operazione 5: Ricerca per saldo */
 esegui(5, Conti, Conti) :- nl, 
                            write('--- RICERCA PER SALDO ---'), nl,
-                           leggi_soglia_saldo('Mostra i conti con saldo maggiore di: ', Soglia),
+                           leggi_soglia_saldo('Mostra i conti con saldo maggiore di euro: ', Soglia),
                            filtra_per_saldo(Soglia, Conti, ContiFiltrati),
                            stampa_risultato_filtro(ContiFiltrati).
 /* Operazione 6: Saldi completi */
@@ -259,9 +266,10 @@ esiste_conto(Num, Conti) :- member(conto(Num, _, _, _), Conti).
    - il suo primo argomento è il numero di conti ancora da creare;
    - il suo secondo argomento è il contatore per la numerazione progressiva;
    - il suo terzo argomento è la lista dei conti accumulata;
-   - il suo quarto argomento (nel risultato) è la lista dei conti completa. */
+   - il suo quarto argomento (nel risultato) è la lista dei conti completa. 
+   L'uso di reverse consente di stampare in ordine i contri creati. */
 
-crea_conti(0, _, ContiAcc, ContiFinali) :- ContiFinali = ContiAcc.
+crea_conti(0, _, ContiAcc, ContiFinali) :- reverse(ContiAcc, ContiFinali).  
 crea_conti(N, Contatore, ContiAcc, ContiFinali) :- N > 0,
                                                    format('Inserisci l''intestatario del conto numero ~w: ', [Contatore]),
                                                    leggi_intestatario(Int),
@@ -273,26 +281,49 @@ crea_conti(N, Contatore, ContiAcc, ContiFinali) :- N > 0,
 
 /* Il predicato genera_numero_casuale genera un numero di conto casuale non ancora usato:
    - il suo primo argomento è la lista dei conti esistenti;
-   - il suo secondo argomento (nel risultato) è il numero generato. */
+   - il suo secondo argomento (nel risultato) è il numero generato.
+   I numeri generati sono in ordine crescente: ogni nuovo conto ha un numero maggiore del precedente. */
 
-genera_numero_casuale(Conti, Num) :- random(1000, 9999, Num),
+genera_numero_casuale(Conti, Num) :- ultimo_numero(Conti, Ultimo),
+                                     Min is Ultimo + 1,
+                                     Max is 9999,
+                                     Diff is Max - Min,
+                                     random(0, Diff, R),
+                                     Num is Min + R,
                                      \+ esiste_conto(Num, Conti), !.
-genera_numero_casuale(Conti, Num) :- get_time(T), 
-                                     RandomNum is integer(1000 + (T * 1000000) mod 8999),
-                                     Num is RandomNum,
+genera_numero_casuale(Conti, Num) :- ultimo_numero(Conti, Ultimo),
+                                     Min is Ultimo + 1,
+                                     Max is 9999,
+                                     Diff is Max - Min,
+                                     get_time(T), 
+                                     R is integer(T * 1000000) mod Diff,
+                                     Num is Min + R,
                                      \+ esiste_conto(Num, Conti), !.
-genera_numero_casuale(Conti, Num) :- genera_numero_sequenziale(Conti, 1000, Num).
+genera_numero_casuale(Conti, Num) :- ultimo_numero(Conti, Ultimo),
+                                     genera_numero_sequenziale(Conti, Ultimo + 1, Num).
+
+/* Il predicato ultimo_numero restituisce il numero più alto tra i conti esistenti:
+   - il suo unico argomento è la lista dei conti.
+   Se non ci sono conti, restituisce 999 (così il primo conto parte da 1000). */
+
+ultimo_numero([], 999).
+ultimo_numero(Conti, Ultimo) :- max_numero(Conti, Ultimo).
+
+max_numero([conto(Num, _, _, _)], Num).
+max_numero([conto(Num1, _, _, _) | Rest], Max) :- max_numero(Rest, MaxRest),
+                                                  Max is max(Num1, MaxRest).
 
 /* Il predicato genera_numero_sequenziale genera un numero di conto
    sequenziale non ancora usato (fallback):
    - il suo primo argomento è la lista dei conti esistenti;
-   - il suo secondo argomento è il tentativo corrente;
-   - il suo terzo argomento (nel risultato) è il numero generato. */
+   - il suo secondo argomento è il tentativo corrente (minimo consentito);
+   - il suo terzo argomento (nel risultato) è il numero generato. 
+   Viene usata come ultima risorsa quando i numeri casuali generati sono tutti occupati. */
 
-genera_numero_sequenziale(Conti, Tentativo, Num) :- Tentativo < 10000,
+genera_numero_sequenziale(Conti, Tentativo, Num) :- Tentativo < 9999,
                                                     \+ esiste_conto(Tentativo, Conti),
                                                     Num = Tentativo, !.
-genera_numero_sequenziale(Conti, Tentativo, Num) :- Tentativo < 10000,
+genera_numero_sequenziale(Conti, Tentativo, Num) :- Tentativo < 9999,
                                                     esiste_conto(Tentativo, Conti),
                                                     Prossimo is Tentativo + 1,
                                                     genera_numero_sequenziale(Conti, Prossimo, Num).

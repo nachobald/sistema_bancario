@@ -337,7 +337,7 @@ esisteConto num (Conto n _ _ _ : rest) | num == n  = True
    L'uso di reverse consente di stampare in ordine i contri creati. -}
 
 creaConti :: Int -> Int -> [Conto] -> IO [Conto]
-creaConti 0 _ contiAcc = return (reverse contiAcc) 
+creaConti 0 _ contiAcc = return (reverse contiAcc)
 creaConti n contatore contiAcc = do printf "Inserisci l'intestatario del conto numero %d: " contatore
                                     intestatario <- leggiIntestatario
                                     numero <- generaNumeroCasuale contiAcc
@@ -432,11 +432,22 @@ cercaConto num (c@(Conto n _ _ _) : rest) | num == n  = Just (c, rest)
                                                           Nothing -> Nothing
                                                           Just (conto, resto) -> Just (conto, c : resto)
 
+{- La funzione sostituisciConto sostituisce un conto nella lista mantenendo la posizione:
+   - il suo primo argomento è il conto aggiornato;
+   - il suo secondo argomento è la lista dei conti corrente;
+   - il risultato è la lista dei conti aggiornata. -}
+
+sostituisciConto :: Conto -> [Conto] -> [Conto]
+sostituisciConto _ [] = []
+sostituisciConto contoAgg@(Conto num _ _ _) (c@(Conto n _ _ _) : rest) | num == n  = contoAgg : rest
+                                                                       | otherwise = c : sostituisciConto contoAgg rest
+
 {- La funzione deposita aggiunge un importo positivo al saldo del conto specificato:
    - il primo argomento è il numero del conto su cui depositare;
    - il secondo argomento è l'importo da depositare;
    - il terzo argomento è la lista dei conti corrente;
    - il suo quarto argomento (nel risultato) è la lista dei conti aggiornata.
+   Il conto viene sostituito nella sua posizione originale, mantenendo l'ordine della lista.
    Restituisce Nothing se il conto non esiste o l'importo non è positivo. -}
 
 deposita :: Int -> Double -> [Conto] -> Maybe [Conto]
@@ -444,17 +455,18 @@ deposita _ importo _ | importo <= 0 = Nothing
 deposita num importo conti =
     case cercaConto num conti of
         Nothing -> Nothing
-        Just (Conto n int saldo trans, resto) ->
+        Just (Conto n int saldo trans, _) ->
             let nuovoSaldo = saldo + importo
                 nuovaTrans = Trans importo Deposito
-                nuovoConto = Conto n int nuovoSaldo (nuovaTrans : trans)
-            in Just (nuovoConto : resto)
+                contoAgg = Conto n int nuovoSaldo (nuovaTrans : trans)
+            in Just (sostituisciConto contoAgg conti)
 
 {- La funzione preleva sottrae un importo positivo dal saldo del conto specificato:
    - il primo argomento è il numero del conto da cui prelevare;
    - il secondo argomento è l'importo da prelevare;
    - il terzo argomento è la lista dei conti corrente;
    - il suo quarto argomento (nel risultato) è la lista dei conti aggiornata.
+   Il conto viene sostituito nella sua posizione originale, mantenendo l'ordine della lista.
    Restituisce Nothing se: il conto non esiste, l'importo non è positivo, o il saldo è insufficiente. -}
 
 preleva :: Int -> Double -> [Conto] -> Maybe [Conto]
@@ -462,12 +474,12 @@ preleva _ importo _ | importo <= 0 = Nothing
 preleva num importo conti =
     case cercaConto num conti of
         Nothing -> Nothing
-        Just (Conto n int saldo trans, resto) | saldo < importo -> Nothing
-                                              | otherwise ->
-                                                  let nuovoSaldo = saldo - importo
-                                                      nuovaTrans = Trans importo Prelievo
-                                                      nuovoConto = Conto n int nuovoSaldo (nuovaTrans : trans)
-                                                  in Just (nuovoConto : resto)
+        Just (Conto n int saldo trans, _) | saldo < importo -> Nothing
+                                          | otherwise ->
+                                              let nuovoSaldo = saldo - importo
+                                                  nuovaTrans = Trans importo Prelievo
+                                                  contoAgg = Conto n int nuovoSaldo (nuovaTrans : trans)
+                                              in Just (sostituisciConto contoAgg conti)
 
 {- La funzione bonifico trasferisce un importo positivo dal conto sorgente al conto destinatario:
    - il primo argomento è il numero del conto sorgente;
@@ -475,6 +487,7 @@ preleva num importo conti =
    - il terzo argomento è l'importo da trasferire;
    - il quarto argomento è la lista dei conti corrente;
    - il suo quinto argomento (nel risultato) è la lista dei conti aggiornata.
+   I conti vengono sostituiti nella loro posizione originale, mantenendo l'ordine della lista.
    Restituisce Nothing se: i conti coincidono, uno dei due non esiste, l'importo non è positivo, o il saldo è insufficiente. -}
 
 bonifico :: Int -> Int -> Double -> [Conto] -> Maybe [Conto]
@@ -482,18 +495,19 @@ bonifico numS numD importo _ | numS == numD || importo <= 0 = Nothing
 bonifico numS numD importo conti =
     case cercaConto numS conti of
         Nothing -> Nothing
-        Just (Conto numSorg intS saldoS transS, restoSenzaS) | saldoS < importo -> Nothing
-                                                             | otherwise ->
-                                                                 case cercaConto numD restoSenzaS of
-                                                                     Nothing -> Nothing
-                                                                     Just (Conto numDest intD saldoD transD, restoFinale) ->
-                                                                         let nuovoSaldoS = saldoS - importo
-                                                                             nuovoSaldoD = saldoD + importo
-                                                                             transSorg = Trans importo BonificoUscita
-                                                                             transDest = Trans importo BonificoEntrata
-                                                                             contoSorg = Conto numSorg intS nuovoSaldoS (transSorg : transS)
-                                                                             contoDest = Conto numDest intD nuovoSaldoD (transDest : transD)
-                                                                         in Just (contoSorg : contoDest : restoFinale)
+        Just (Conto numSorg intS saldoS transS, _) | saldoS < importo -> Nothing
+                                                   | otherwise ->
+                                                       case cercaConto numD conti of
+                                                           Nothing -> Nothing
+                                                           Just (Conto numDest intD saldoD transD, _) ->
+                                                               let nuovoSaldoS = saldoS - importo
+                                                                   nuovoSaldoD = saldoD + importo
+                                                                   transSorg = Trans importo BonificoUscita
+                                                                   transDest = Trans importo BonificoEntrata
+                                                                   contoSorgAgg = Conto numSorg intS nuovoSaldoS (transSorg : transS)
+                                                                   contoDestAgg = Conto numDest intD nuovoSaldoD (transDest : transD)
+                                                                   contiTemp = sostituisciConto contoSorgAgg conti
+                                                               in Just (sostituisciConto contoDestAgg contiTemp)
 
 {- La funzione saldo restituisce il saldo attuale del conto specificato:
    - il primo argomento è il numero del conto;

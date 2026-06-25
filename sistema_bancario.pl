@@ -269,7 +269,7 @@ esiste_conto(Num, Conti) :- member(conto(Num, _, _, _), Conti).
    - il suo quarto argomento (nel risultato) è la lista dei conti completa. 
    L'uso di reverse consente di stampare in ordine i contri creati. */
 
-crea_conti(0, _, ContiAcc, ContiFinali) :- reverse(ContiAcc, ContiFinali).  
+crea_conti(0, _, ContiAcc, ContiFinali) :- reverse(ContiAcc, ContiFinali).
 crea_conti(N, Contatore, ContiAcc, ContiFinali) :- N > 0,
                                                    format('Inserisci l''intestatario del conto numero ~w: ', [Contatore]),
                                                    leggi_intestatario(Int),
@@ -369,34 +369,50 @@ cerca_conto(Num, [conto(Num, Int, Saldo, Trans) | Rest], conto(Num, Int, Saldo, 
 cerca_conto(Num, [C | Rest], Conto, [C | Resto]) :- C = conto(N, _, _, _),
                                                     N \= Num,
                                                     cerca_conto(Num, Rest, Conto, Resto).
+                                                   
+/* Il predicato sostituisci_conto sostituisce un conto nella lista mantenendo la posizione:
+   - il suo primo argomento è il conto aggiornato;
+   - il suo secondo argomento è la lista dei conti corrente;
+   - il suo terzo argomento (nel risultato) è la lista dei conti aggiornata. */
+
+sostituisci_conto(_, [], []).
+sostituisci_conto(ContoAgg, [ContoVecchio | Resto], [ContoAgg | Resto]) :- ContoVecchio = conto(Num, _, _, _),
+                                                                           ContoAgg = conto(Num, _, _, _).
+sostituisci_conto(ContoAgg, [C | Resto], [C | NuovoResto]) :- C = conto(NumC, _, _, _),
+                                                              ContoAgg = conto(NumAgg, _, _, _),
+                                                              NumC \= NumAgg,
+                                                              sostituisci_conto(ContoAgg, Resto, NuovoResto).
 
 /* Il predicato deposita aggiunge un importo positivo al saldo del conto specificato:
    - il suo primo argomento è il numero del conto su cui depositare;
    - il suo secondo argomento è l'importo da depositare;
    - il suo terzo argomento è la lista dei conti corrente;
    - il suo quarto argomento (nel risultato) è la lista dei conti aggiornata.
+   Il conto viene sostituito nella sua posizione originale, mantenendo l'ordine della lista.
    Il predicato fallisce se il conto non esiste o se l'importo non è positivo. */
 
 deposita(Num, Importo, ContiVecchi, ContiNuovi) :- Importo > 0,
-                                                   cerca_conto(Num, ContiVecchi, conto(Num, Int, Saldo, Trans), Resto),
+                                                   cerca_conto(Num, ContiVecchi, conto(Num, Int, Saldo, Trans), _),
                                                    NuovoSaldo is Saldo + Importo,
                                                    NuovaTrans = trans(Importo, deposito),
-                                                   ContiNuovi = [conto(Num, Int, NuovoSaldo, [NuovaTrans | Trans]) | Resto].
+                                                   ContoAgg = conto(Num, Int, NuovoSaldo, [NuovaTrans | Trans]),
+                                                   sostituisci_conto(ContoAgg, ContiVecchi, ContiNuovi).
 
 /* Il predicato preleva sottrae un importo positivo dal saldo del conto specificato:
    - il suo primo argomento è il numero del conto da cui prelevare;
    - il suo secondo argomento è l'importo da prelevare;
    - il suo terzo argomento è la lista dei conti corrente;
    - il suo quarto argomento (nel risultato) è la lista dei conti aggiornata.
-   Il predicato fallisce se il conto non esiste, se l'importo non è positivo
-   o se il saldo è insufficiente. */
+   Il conto viene sostituito nella sua posizione originale, mantenendo l'ordine della lista.
+   Il predicato fallisce se il conto non esiste, se l'importo non è positivo o se il saldo è insufficiente. */
 
 preleva(Num, Importo, ContiVecchi, ContiNuovi) :- Importo > 0,
-                                                  cerca_conto(Num, ContiVecchi, conto(Num, Int, Saldo, Trans), Resto),
+                                                  cerca_conto(Num, ContiVecchi, conto(Num, Int, Saldo, Trans), _),
                                                   Saldo > Importo,
                                                   NuovoSaldo is Saldo - Importo,
                                                   NuovaTrans = trans(Importo, prelievo),
-                                                  ContiNuovi = [conto(Num, Int, NuovoSaldo, [NuovaTrans | Trans]) | Resto].
+                                                  ContoAgg = conto(Num, Int, NuovoSaldo, [NuovaTrans | Trans]),
+                                                  sostituisci_conto(ContoAgg, ContiVecchi, ContiNuovi).
 
 /* Il predicato bonifico trasferisce un importo positivo dal conto sorgente al conto destinatario:
    - il suo primo argomento è il numero del conto sorgente;
@@ -404,22 +420,23 @@ preleva(Num, Importo, ContiVecchi, ContiNuovi) :- Importo > 0,
    - il suo terzo argomento è l'importo da trasferire;
    - il suo quarto argomento è la lista dei conti corrente;
    - il suo quinto argomento (nel risultato) è la lista dei conti aggiornata.
-   Il predicato fallisce se i due conti coincidono, se uno dei due non esiste,
-   se l'importo non è positivo o se il saldo del conto sorgente è insufficiente. */
+   I conti vengono sostituiti nella loro posizione originale, mantenendo l'ordine della lista.
+   Il predicato fallisce se i due conti coincidono, se uno dei due non esiste, se l'importo non 
+   è positivo o se il saldo del conto sorgente è insufficiente. */
 
 bonifico(NumS, NumD, Importo, ContiVecchi, ContiNuovi) :- NumS \= NumD,
                                                           Importo > 0,
-                                                          cerca_conto(NumS, ContiVecchi, conto(NumS, IntS, SaldoS, TransS), RestoSenzaS),
+                                                          cerca_conto(NumS, ContiVecchi, conto(NumS, IntS, SaldoS, TransS), _),
                                                           SaldoS > Importo,
-                                                          cerca_conto(NumD, RestoSenzaS, conto(NumD, IntD, SaldoD, TransD), RestoFinale),
+                                                          cerca_conto(NumD, ContiVecchi, conto(NumD, IntD, SaldoD, TransD), _),
                                                           NuovoSaldoS is SaldoS - Importo,
                                                           NuovoSaldoD is SaldoD + Importo,
                                                           NuovaTransS = trans(Importo, bonifico_uscita),
                                                           NuovaTransD = trans(Importo, bonifico_entrata),
-                                                          ContiNuovi = [
-                                                              conto(NumS, IntS, NuovoSaldoS, [NuovaTransS | TransS]),
-                                                              conto(NumD, IntD, NuovoSaldoD, [NuovaTransD | TransD])
-                                                          | RestoFinale].
+                                                          ContoSorgAgg = conto(NumS, IntS, NuovoSaldoS, [NuovaTransS | TransS]),
+                                                          ContoDestAgg = conto(NumD, IntD, NuovoSaldoD, [NuovaTransD | TransD]),
+                                                          sostituisci_conto(ContoSorgAgg, ContiVecchi, ContiTemp),
+                                                          sostituisci_conto(ContoDestAgg, ContiTemp, ContiNuovi).
 
 /* Il predicato saldo restituisce il saldo attuale del conto specificato:
    - il suo primo argomento è il numero del conto;

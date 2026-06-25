@@ -36,7 +36,7 @@ main = do putStrLn ""
 
 {- La funzione leggiNumeroConti legge il numero di conti da creare:
    - il risultato è il numero letto;
-   - richiede un numero intero positivo (> 0). -}
+   Richiede un numero intero positivo (> 0). -}
 
 leggiNumeroConti :: IO Int
 leggiNumeroConti = do putStr "Quanti conti vuoi creare? "
@@ -46,86 +46,9 @@ leggiNumeroConti = do putStr "Quanti conti vuoi creare? "
                           _ -> do putStrLn "ERRORE: inserire un numero intero positivo."
                                   leggiNumeroConti
 
-{- La funzione leggiImportoPositivo legge un importo positivo:
-   - il suo unico argomento è il messaggio da mostrare all'utente;
-   - il risultato è l'importo letto (deve essere > 0). -}
-
-leggiImportoPositivo :: String -> IO Double
-leggiImportoPositivo msg = do putStr msg
-                              input <- getLine
-                              case readMaybe input of
-                                  Just imp | imp > 0 -> return imp
-                                  _ -> do putStrLn "ERRORE: inserire un importo positivo."
-                                          leggiImportoPositivo msg
-
-{- La funzione leggiImportoValido legge un importo compreso tra 0 e un massimo:
-   - il suo primo argomento è il messaggio da mostrare all'utente;
-   - il suo secondo argomento è il valore massimo consentito;
-   - il risultato è l'importo letto (deve essere > 0 e < massimo). -}
-
-leggiImportoValido :: String -> Double -> IO Double
-leggiImportoValido msg massimo = do putStr msg
-                                    input <- getLine
-                                    case readMaybe input of
-                                        Just imp | imp > 0 && imp < massimo -> return imp
-                                        _ -> do printf "ERRORE: inserire un valore maggiore di 0 e minore di %.2f.\n" massimo
-                                                leggiImportoValido msg massimo
-
-{- La funzione leggiSogliaSaldo legge un numero non negativo per la ricerca per saldo:
-   - il suo unico argomento è il messaggio da mostrare all'utente;
-   - il risultato è il numero letto (deve essere >= 0). -}
-
-leggiSogliaSaldo :: String -> IO Double
-leggiSogliaSaldo msg = do putStr msg
-                          input <- getLine
-                          case readMaybe input of
-                              Just soglia | soglia >= 0 -> return soglia
-                              _ -> do putStrLn "ERRORE: inserire un numero non negativo"
-                                      leggiSogliaSaldo msg
-
-{- La funzione leggiIntestatario legge un intestatario valido:
-   - il risultato è l'intestatario letto;
-   - deve contenere almeno una lettera. -}
-
-leggiIntestatario :: IO String
-leggiIntestatario = do input <- getLine
-                       case validoIntestatario input of
-                           True  -> return input
-                           False -> do putStrLn "ERRORE: intestatario non valido (deve contenere almeno una lettera)."
-                                       putStr "Inserisci nuovamente l'intestatario: "
-                                       leggiIntestatario
-
-{- La funzione leggiIdConto legge un numero di conto esistente:
-   - il suo primo argomento è il messaggio da mostrare all'utente;
-   - il suo secondo argomento è la lista dei conti;
-   - il risultato è il numero del conto letto (deve esistere). -}
-
-leggiIdConto :: String -> [Conto] -> IO Int
-leggiIdConto msg conti = do putStr msg
-                            input <- getLine
-                            case readMaybe input of
-                                Just num | esisteConto num conti -> return num
-                                _ -> do putStrLn "ERRORE: conto inesistente."
-                                        leggiIdConto msg conti
-
-{- La funzione leggiContoDestinatario legge un conto destinatario:
-   - il suo primo argomento è il messaggio da mostrare all'utente;
-   - il suo secondo argomento è il numero del conto sorgente;
-   - il suo terzo argomento è la lista dei conti;
-   - il risultato è il numero del conto destinatario letto;
-   - deve essere esistente e diverso dal conto sorgente. -}
-
-leggiContoDestinatario :: String -> Int -> [Conto] -> IO Int
-leggiContoDestinatario msg numS conti = do putStr msg
-                                           input <- getLine
-                                           case readMaybe input of
-                                               Just numD | esisteConto numD conti && numD /= numS -> return numD
-                                               _ -> do putStrLn "ERRORE: conto inesistente o coincidente con il conto ordinante."
-                                                       leggiContoDestinatario msg numS conti
-
 {- La funzione stampaContiDettaglio stampa l'elenco dei conti con tutti i dettagli:
    - il suo unico argomento è la lista dei conti da stampare
-   - per ogni conto mostra: numero, intestatario e saldo -}
+   Per ogni conto mostra: numero, intestatario e saldo -}
 
 stampaContiDettaglio :: [Conto] -> IO ()
 stampaContiDettaglio [] = return ()
@@ -137,6 +60,7 @@ stampaContiDettaglio (Conto num int saldo _ : rest) = do printf "  - Conto %d (%
 
 stampaContiRapidi :: [Conto] -> IO ()
 stampaContiRapidi conti = stampaContiRapidiAux conti 1
+
 
 {- La funzione stampaContiRapidiAux è una funzione ausiliaria che stampa i conti mantenendo un contatore:
    - il suo primo argomento è la lista dei conti da stampare;
@@ -152,44 +76,32 @@ stampaContiRapidiAux (Conto num int _ _ : rest) contatore | contatore `mod` 5 ==
                                                                                         stampaContiRapidiAux rest (contatore + 1)
 
 {- La funzione stampaStorico stampa l'elenco delle transazioni di un conto:
-   - il suo unico argomento è la lista delle transazioni da stampare
-   - per ogni transazione mostra: tipo e importo -}
+   - il suo unico argomento è la lista delle transazioni da stampare;
+   Per ogni transazione mostra: tipo e importo. -}
 
 stampaStorico :: [Transazione] -> IO ()
 stampaStorico [] = return ()
 stampaStorico (Trans imp tipo : rest) = do printf "  - %s: %.2f euro\n" (mostraTipo tipo) imp
                                            stampaStorico rest
 
-{- La funzione mostraTipo converte un tipo di transazione in stringa:
-   - il suo unico argomento è il tipo di transazione
-   - il risultato è la stringa corrispondente -}
-
-mostraTipo :: Tipo -> String
-mostraTipo Deposito        = "deposito"
-mostraTipo Prelievo        = "prelievo"
-mostraTipo BonificoUscita  = "bonifico_uscita"
-mostraTipo BonificoEntrata = "bonifico_entrata"
-
-{- La funzione stampaRisultatoFiltro stampa il risultato della ricerca per saldo:
-   - il suo unico argomento è la lista dei conti filtrati
-   - se la lista è vuota stampa un messaggio di nessun risultato
-   - altrimenti stampa i conti in dettaglio -}
+{- La funzione stampaRisultatoFiltro stampa l'elenco dei conti con saldo superiore alla soglia:
+   - il suo unico argomento è la lista dei conti da stampare. -}
 
 stampaRisultatoFiltro :: [Conto] -> IO ()
 stampaRisultatoFiltro [] = putStrLn "  Nessun conto soddisfa il criterio di ricerca"
 stampaRisultatoFiltro conti = stampaContiDettaglio conti
 
 {- La funzione menu gestisce le operazioni richieste dall'utente:
-   - il suo unico argomento è la lista dei conti corrente -}
+   - il suo unico argomento è la lista dei conti corrente. -}
 
 menu :: [Conto] -> IO ()
 menu conti = do scelta <- leggiScelta conti
                 gestisciScelta scelta conti
 
 {- La funzione gestisciScelta gestisce la scelta dell'utente:
-   - il primo argomento è la scelta effettuata
-   - il secondo argomento è la lista dei conti corrente
-   - la scelta 7 termina il programma -}
+   - il suo primo argomento è la scelta effettuata;
+   - il suo secondo argomento è la lista dei conti corrente.
+   La scelta 7 termina il programma, le altre eseguono l'operazione corrispondente. -}
 
 gestisciScelta :: Int -> [Conto] -> IO ()
 gestisciScelta 7 _ = do putStrLn ""
@@ -198,9 +110,9 @@ gestisciScelta scelta conti = do contiNuovi <- esegui scelta conti
                                  menu contiNuovi
 
 {- La funzione esegui esegue l'operazione corrispondente alla scelta dell'utente:
-   - il primo argomento è il numero dell'operazione (1-7)
-   - il secondo argomento è la lista dei conti corrente
-   - il risultato è la lista dei conti aggiornata
+   - il primo argomento è il numero dell'operazione (1-7);
+   - il secondo argomento è la lista dei conti corrente;
+   - il suo terzo argomento (nel risultato) è la lista dei conti aggiornata.
    Le operazioni 4, 5 e 6 sono di sola lettura e lasciano invariata la lista. -}
 
 esegui :: Int -> [Conto] -> IO [Conto]
@@ -252,10 +164,10 @@ esegui 6 conti = do putStrLn ""
 esegui _ conti = return conti
 
 {- La funzione gestisciPrelievo gestisce il prelievo controllando il saldo:
-   - il primo argomento è il saldo disponibile
-   - il secondo argomento è il numero del conto
-   - il terzo argomento è la lista dei conti corrente
-   - il risultato è la lista dei conti aggiornata -}
+   - il primo argomento è il saldo disponibile;
+   - il secondo argomento è il numero del conto;
+   - il terzo argomento è la lista dei conti corrente;
+   - il suo quarto argomento (nel risultato) è la lista dei conti aggiornata. -}
 
 gestisciPrelievo :: Double -> Int -> [Conto] -> IO [Conto]
 gestisciPrelievo saldoDisponibile _ conti | saldoDisponibile == 0 = do putStrLn "Saldo 0: impossibile eseguire prelievo."
@@ -268,10 +180,10 @@ gestisciPrelievo saldoDisponibile num conti = do importo <- leggiImportoValido "
 
 
 {- La funzione gestisciBonifico gestisce il bonifico controllando il saldo:
-   - il primo argomento è il saldo del conto sorgente
-   - il secondo argomento è il numero del conto sorgente
-   - il terzo argomento è la lista dei conti corrente
-   - il risultato è la lista dei conti aggiornata -}
+   - il primo argomento è il saldo del conto sorgente;
+   - il secondo argomento è il numero del conto sorgente;
+   - il terzo argomento è la lista dei conti corrente;
+   - il suo quarto argomento (nel risultato) è la lista dei conti aggiornata. -}
 
 gestisciBonifico :: Double -> Int -> [Conto] -> IO [Conto]
 gestisciBonifico saldoS _ conti | saldoS == 0 = do putStrLn "Saldo 0: impossibile eseguire bonifico."
@@ -284,15 +196,15 @@ gestisciBonifico saldoS numS conti = do numD <- leggiContoDestinatario "Conto be
                                                                   return contiNuovi
 
 {- La funzione leggiScelta mostra il menu e i conti, poi avvia la lettura:
-   - il suo unico argomento è la lista dei conti corrente
-   - il risultato è la scelta dell'utente -}
+   - il suo unico argomento è la lista dei conti corrente;
+   - il suo secondo argomento (nel risultato) è la scelta dell'utente. -}
 
 leggiScelta :: [Conto] -> IO Int
 leggiScelta conti = do stampaMenu conti
                        leggiSceltaOperazione conti
 
-{- La funzione stampaMenu stampa il menu delle operazioni e i conti disponibili:
-   - il suo unico argomento è la lista dei conti corrente -}
+{- La funzione stampaMenu stampa il menu delle operazioni e i conti disponibili con cui operare:
+   - il suo unico argomento è la lista dei conti corrente. -}
 
 stampaMenu :: [Conto] -> IO ()
 stampaMenu conti = do putStrLn ""
@@ -310,8 +222,8 @@ stampaMenu conti = do putStrLn ""
                       putStrLn ""
 
 {- La funzione leggiSceltaOperazione legge la scelta dell'utente:
-   - il suo unico argomento è la lista dei conti corrente
-   - il risultato è un numero compreso tra 1 e 7 -}
+   - il suo primo argomento è la lista dei conti corrente;
+   - il suo secondo argomento (nel risultato)è il numero della scelta valida effettuata. -}
 
 leggiSceltaOperazione :: [Conto] -> IO Int
 leggiSceltaOperazione conti = do putStr "Scegli operazione (digita 1-7): "
@@ -321,10 +233,86 @@ leggiSceltaOperazione conti = do putStr "Scegli operazione (digita 1-7): "
                                      _ -> do putStrLn "ERRORE: inserire un numero tra 1 e 7."
                                              leggiSceltaOperazione conti
 
+{- La funzione leggiImportoPositivo legge un importo positivo:
+   - il suo unico argomento è il messaggio da mostrare all'utente;
+   - il suo secondo argomento (nel risultato) è l'importo letto. -}
+
+leggiImportoPositivo :: String -> IO Double
+leggiImportoPositivo msg = do putStr msg
+                              input <- getLine
+                              case readMaybe input of
+                                  Just imp | imp > 0 -> return imp
+                                  _ -> do putStrLn "ERRORE: inserire un importo positivo."
+                                          leggiImportoPositivo msg
+
+{- La funzione leggiImportoValido legge un importo compreso tra 0 e un massimo:
+   - il suo primo argomento è il messaggio da mostrare all'utente;
+   - il suo secondo argomento è il valore massimo consentito;
+   - il suo terzo argomento (nel risultato) è l'importo letto. -}
+
+leggiImportoValido :: String -> Double -> IO Double
+leggiImportoValido msg massimo = do putStr msg
+                                    input <- getLine
+                                    case readMaybe input of
+                                        Just imp | imp > 0 && imp < massimo -> return imp
+                                        _ -> do printf "ERRORE: inserire un valore maggiore di 0 e minore di %.2f.\n" massimo
+                                                leggiImportoValido msg massimo
+
+{- La funzione leggiSogliaSaldo legge un numero non negativo per la ricerca per saldo:
+   - il suo primo argomento è il messaggio da mostrare all'utente;
+   - il suo secondo argomento (nel risultato) è il numero letto. -}
+
+leggiSogliaSaldo :: String -> IO Double
+leggiSogliaSaldo msg = do putStr msg
+                          input <- getLine
+                          case readMaybe input of
+                              Just soglia | soglia >= 0 -> return soglia
+                              _ -> do putStrLn "ERRORE: inserire un numero non negativo"
+                                      leggiSogliaSaldo msg
+
+{- La funzione leggiIntestatario legge un intestatario valido:
+   - il suo unico argomento (nel risultato) è l'intestatario letto. -}
+
+leggiIntestatario :: IO String
+leggiIntestatario = do input <- getLine
+                       case validoIntestatario input of
+                           True  -> return input
+                           False -> do putStrLn "ERRORE: intestatario non valido (deve contenere almeno una lettera)."
+                                       putStr "Inserisci nuovamente l'intestatario: "
+                                       leggiIntestatario
+
+{- La funzione leggiIdConto legge un numero di conto esistente:
+   - il suo primo argomento è il messaggio da mostrare all'utente;
+   - il suo secondo argomento è la lista dei conti;
+   - il suo terzo argomento (nel risultato) è il numero del conto letto. -}
+
+leggiIdConto :: String -> [Conto] -> IO Int
+leggiIdConto msg conti = do putStr msg
+                            input <- getLine
+                            case readMaybe input of
+                                Just num | esisteConto num conti -> return num
+                                _ -> do putStrLn "ERRORE: conto inesistente."
+                                        leggiIdConto msg conti
+
+{- La funzione leggiContoDestinatario legge un conto destinatario:
+   - il suo primo argomento è il messaggio da mostrare all'utente;
+   - il suo secondo argomento è il numero del conto sorgente;
+   - il suo terzo argomento è la lista dei conti;
+   - il suo quarto argomento (nel risultato) è il numero del conto destinatario letto.
+   Il conto destinatario deve essere esistente e diverso dal conto sorgente. -}
+
+leggiContoDestinatario :: String -> Int -> [Conto] -> IO Int
+leggiContoDestinatario msg numS conti = do putStr msg
+                                           input <- getLine
+                                           case readMaybe input of
+                                               Just numD | esisteConto numD conti && numD /= numS -> return numD
+                                               _ -> do putStrLn "ERRORE: conto inesistente o coincidente con il conto ordinante."
+                                                       leggiContoDestinatario msg numS conti
+
 {- La funzione esisteConto verifica se un conto è presente nella lista:
-   - il primo argomento è il numero del conto da cercare
-   - il secondo argomento è la lista dei conti
-   - il risultato è True se il conto esiste, False altrimenti -}
+   - il primo argomento è il numero del conto da cercare;
+   - il secondo argomento è la lista dei conti.
+   Il risultato è True se il conto esiste, False altrimenti -}
 
 esisteConto :: Int -> [Conto] -> Bool
 esisteConto _ [] = False
@@ -332,10 +320,10 @@ esisteConto num (Conto n _ _ _ : rest) | num == n  = True
                                        | otherwise = esisteConto num rest
 
 {- La funzione creaConti crea N conti con numeri casuali:
-   - il primo argomento è il numero di conti ancora da creare
-   - il secondo argomento è il contatore per la numerazione progressiva
-   - il terzo argomento è la lista dei conti accumulata
-   - il risultato è la lista dei conti completa -}
+   - il primo argomento è il numero di conti ancora da creare;
+   - il secondo argomento è il contatore per la numerazione progressiva;
+   - il terzo argomento è la lista dei conti accumulata;
+   - il suo quarto argomento (nel risultato) è la lista dei conti completa. -}
 
 creaConti :: Int -> Int -> [Conto] -> IO [Conto]
 creaConti 0 _ contiAcc = return contiAcc
@@ -345,12 +333,35 @@ creaConti n contatore contiAcc = do printf "Inserisci l'intestatario del conto n
                                     let nuovoConto = Conto numero intestatario 0 []
                                     creaConti (n - 1) (contatore + 1) (nuovoConto : contiAcc)
 
+
+
+
+
+{- La funzione mostraTipo converte un tipo di transazione in stringa:
+   - il suo unico argomento è il tipo di transazione
+   - il risultato è la stringa corrispondente -}
+
+mostraTipo :: Tipo -> String
+mostraTipo Deposito        = "deposito"
+mostraTipo Prelievo        = "prelievo"
+mostraTipo BonificoUscita  = "bonifico_uscita"
+mostraTipo BonificoEntrata = "bonifico_entrata"
+
+
+
+
+
+
+
+
+
+
+
+
+
 {- La funzione generaNumeroCasuale genera un numero di conto casuale non ancora usato:
-   - il suo argomento è la lista dei conti esistenti
-   - il risultato è il numero generato
-   - prima tenta con un numero casuale basato sul tempo
-   - se è occupato, tenta con un secondo numero basato sul tempo
-   - se anche questo è occupato, usa il fallback sequenziale -}
+   - il suo argomento è la lista dei conti esistenti;
+   - il suo secondo argomento (nel risultato) è il numero generato. -}
 
 generaNumeroCasuale :: [Conto] -> IO Int
 generaNumeroCasuale conti = do tempo <- getPOSIXTime
@@ -372,9 +383,9 @@ generaNumeroCasualeFallback conti num | not (esisteConto num conti) = return num
                                       | otherwise                   = return (generaNumeroSequenziale conti 1000)
 
 {- La funzione generaNumeroSequenziale genera un numero di conto sequenziale non ancora usato (fallback):
-   - il primo argomento è la lista dei conti esistenti
-   - il secondo argomento è il tentativo corrente
-   - il risultato è il numero generato -}
+   - il primo argomento è la lista dei conti esistenti;
+   - il secondo argomento è il tentativo corrente;
+   - il suo terzo argomento (nel risultato) è il numero generato. -}
 
 generaNumeroSequenziale :: [Conto] -> Int -> Int
 generaNumeroSequenziale conti tentativo | tentativo < 10000 && not (esisteConto tentativo conti) = tentativo
@@ -382,9 +393,9 @@ generaNumeroSequenziale conti tentativo | tentativo < 10000 && not (esisteConto 
                                         | otherwise         = 9999
 
 {- La funzione filtraPerSaldo restituisce la lista dei conti con saldo maggiore della soglia:
-   - il primo argomento è la soglia
-   - il secondo argomento è la lista dei conti
-   - il risultato è la lista dei conti filtrati -}
+   - il primo argomento è la soglia;
+   - il secondo argomento è la lista dei conti;
+   - il suo terzo argomento (nel risultato) è la lista dei conti filtrati. -}
 
 filtraPerSaldo :: Double -> [Conto] -> [Conto]
 filtraPerSaldo _ [] = []
@@ -392,18 +403,18 @@ filtraPerSaldo s (c@(Conto _ _ saldo _) : rest) | saldo > s = c : filtraPerSaldo
                                                 | otherwise = filtraPerSaldo s rest
 
 {- La funzione validoIntestatario verifica che una stringa contenga almeno una lettera:
-   - il suo unico argomento è la stringa da verificare
-   - il risultato è True se contiene almeno una lettera, False altrimenti -}
+   - il suo unico argomento è la stringa da verificare.
+   Il risultato è True se contiene almeno una lettera, False altrimenti -}
 
 validoIntestatario :: String -> Bool
 validoIntestatario [] = False
 validoIntestatario s = any isAlpha s
 
 {- La funzione cercaConto cerca un conto per numero all'interno della lista:
-   - il primo argomento è il numero del conto da cercare
-   - il secondo argomento è la lista dei conti
+   - il primo argomento è il numero del conto da cercare;
+   - il secondo argomento è la lista dei conti;
    - il risultato è una coppia contenente: il conto trovato e la lista rimanente
-   - restituisce Nothing se il conto non esiste -}
+   - restituisce Nothing se il conto non esiste. -}
 
 cercaConto :: Int -> [Conto] -> Maybe (Conto, [Conto])
 cercaConto _ [] = Nothing
@@ -413,11 +424,11 @@ cercaConto num (c@(Conto n _ _ _) : rest) | num == n  = Just (c, rest)
                                                           Just (conto, resto) -> Just (conto, c : resto)
 
 {- La funzione deposita aggiunge un importo positivo al saldo del conto specificato:
-   - il primo argomento è il numero del conto
-   - il secondo argomento è l'importo da depositare
-   - il terzo argomento è la lista dei conti corrente
-   - il risultato è la lista dei conti aggiornata
-   - restituisce Nothing se il conto non esiste o l'importo non è positivo -}
+   - il primo argomento è il numero del conto su cui depositare;
+   - il secondo argomento è l'importo da depositare;
+   - il terzo argomento è la lista dei conti corrente;
+   - il suo quarto argomento (nel risultato) è la lista dei conti aggiornata.
+   Restituisce Nothing se il conto non esiste o l'importo non è positivo. -}
 
 deposita :: Int -> Double -> [Conto] -> Maybe [Conto]
 deposita _ importo _ | importo <= 0 = Nothing
@@ -431,11 +442,11 @@ deposita num importo conti =
             in Just (nuovoConto : resto)
 
 {- La funzione preleva sottrae un importo positivo dal saldo del conto specificato:
-   - il primo argomento è il numero del conto
-   - il secondo argomento è l'importo da prelevare
-   - il terzo argomento è la lista dei conti corrente
-   - il risultato è la lista dei conti aggiornata
-   - restituisce Nothing se: il conto non esiste, l'importo non è positivo, o il saldo è insufficiente -}
+   - il primo argomento è il numero del conto da cui prelevare;
+   - il secondo argomento è l'importo da prelevare;
+   - il terzo argomento è la lista dei conti corrente;
+   - il suo quarto argomento (nel risultato) è la lista dei conti aggiornata.
+   Restituisce Nothing se: il conto non esiste, l'importo non è positivo, o il saldo è insufficiente. -}
 
 preleva :: Int -> Double -> [Conto] -> Maybe [Conto]
 preleva _ importo _ | importo <= 0 = Nothing
@@ -450,12 +461,12 @@ preleva num importo conti =
                                                   in Just (nuovoConto : resto)
 
 {- La funzione bonifico trasferisce un importo positivo dal conto sorgente al conto destinatario:
-   - il primo argomento è il numero del conto sorgente
-   - il secondo argomento è il numero del conto destinatario
-   - il terzo argomento è l'importo da trasferire
-   - il quarto argomento è la lista dei conti corrente
-   - il risultato è la lista dei conti aggiornata
-   - restituisce Nothing se: i conti coincidono, uno dei due non esiste, l'importo non è positivo, o il saldo è insufficiente -}
+   - il primo argomento è il numero del conto sorgente;
+   - il secondo argomento è il numero del conto destinatario;
+   - il terzo argomento è l'importo da trasferire;
+   - il quarto argomento è la lista dei conti corrente;
+   - il suo quinto argomento (nel risultato) è la lista dei conti aggiornata.
+   Restituisce Nothing se: i conti coincidono, uno dei due non esiste, l'importo non è positivo, o il saldo è insufficiente. -}
 
 bonifico :: Int -> Int -> Double -> [Conto] -> Maybe [Conto]
 bonifico numS numD importo _ | numS == numD || importo <= 0 = Nothing
@@ -476,10 +487,10 @@ bonifico numS numD importo conti =
                                                                          in Just (contoSorg : contoDest : restoFinale)
 
 {- La funzione saldo restituisce il saldo attuale del conto specificato:
-   - il primo argomento è il numero del conto
-   - il secondo argomento è la lista dei conti
-   - il risultato è il saldo del conto
-   - restituisce Nothing se il conto non esiste -}
+   - il primo argomento è il numero del conto;
+   - il secondo argomento è la lista dei conti;
+   - il suo terzo argomento (nel risultato) è il saldo del conto.
+   Restituisce Nothing se il conto non esiste -}
 
 saldo :: Int -> [Conto] -> Maybe Double
 saldo _ [] = Nothing
@@ -487,10 +498,10 @@ saldo num (Conto n _ saldoConto _ : rest) | num == n  = Just saldoConto
                                           | otherwise = saldo num rest
 
 {- La funzione storico restituisce la lista delle transazioni del conto specificato:
-   - il primo argomento è il numero del conto
-   - il secondo argomento è la lista dei conti
-   - il risultato è la lista delle transazioni
-   - restituisce Nothing se il conto non esiste -}
+   - il primo argomento è il numero del conto;
+   - il secondo argomento è la lista dei conti;
+   - il suo terzo argomento (nel risultato) è la lista delle transazioni.
+   Restituisce Nothing se il conto non esiste -}
 
 storico :: Int -> [Conto] -> Maybe [Transazione]
 storico _ [] = Nothing

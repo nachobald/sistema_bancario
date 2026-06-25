@@ -9,7 +9,8 @@ main :- nl,
         menu(Conti).
 
 /* Il predicato leggi_numero_conti legge il numero di conti da creare:
-   - il suo unico argomento (nel risultato) è il numero letto. */
+   - il suo unico argomento (nel risultato) è il numero letto.
+   Richiede un numero intero positivo (> 0). */
 
 leggi_numero_conti(N) :- write('Quanti conti vuoi creare? '),
                          read(N),
@@ -18,16 +19,17 @@ leggi_numero_conti(N) :- write('Quanti conti vuoi creare? '),
 leggi_numero_conti(N) :- write('ERRORE: inserire un numero intero positivo.'), nl,
                          leggi_numero_conti(N).
 
-/* Il predicato stampa_conti_dettaglio stampa l'elenco dei conti con tutti i relativi dettagli:
-   - il suo unico argomento è la lista dei conti da stampare */
+/* Il predicato stampa_conti_dettaglio stampa l'elenco dei conti con tutti i dettagli:
+   - il suo unico argomento è la lista dei conti da stampare.
+   Per ogni conto mostra: numero, intestatario e saldo. */
 
 stampa_conti_dettaglio([]).
 stampa_conti_dettaglio([conto(Num, Int, Saldo, _) | Rest]) :- format('  - Conto ~w (~w): saldo = ~2f~n', [Num, Int, Saldo]),
                                                              stampa_conti_dettaglio(Rest).
 
 /* Il predicato stampa_conti_rapidi stampa un riepilogo essenziale dei conti utili per le operazioni:
-   - il suo unico argomento è la lista dei conti da stampare
-   Dopo 5 conti va a capo per una migliore leggibilità */
+   - il suo unico argomento è la lista dei conti da stampare.
+   Dopo 5 conti va a capo per una migliore leggibilità. */
 
 stampa_conti_rapidi(Conti) :- stampa_conti_rapidi(Conti, 1).
 stampa_conti_rapidi([], _) :- nl.
@@ -40,8 +42,9 @@ stampa_conti_rapidi([conto(Num, Int, _, _) | Rest], Contatore) :- format('[~w|~w
                                                                   NuovoContatore is Contatore + 1,
                                                                   stampa_conti_rapidi(Rest, NuovoContatore).
 
-/* Il predicato stampa_storico stampa in modo leggibile l'elenco delle transazioni:
-   - il suo unico argomento è la lista delle transazioni da stampare. */
+/* Il predicato stampa_storico stampa l'elenco delle transazioni di un conto:
+   - il suo unico argomento è la lista delle transazioni da stampare.
+   Per ogni transazione mostra: tipo e importo. */
 
 stampa_storico([]).
 stampa_storico([trans(Imp, Tipo) | Rest]) :- format('  - ~w: ~2f euro~n', [Tipo, Imp]),
@@ -63,7 +66,7 @@ menu(Conti) :- leggi_scelta(Conti, Scelta),
 /* Il predicato gestisci_scelta gestisce la scelta dell'utente:
    - il suo primo argomento è la scelta effettuata;
    - il suo secondo argomento è la lista dei conti corrente.
-   La scelta 7 termina il programma; le altre eseguono l'operazione corrispondente. */
+   La scelta 7 termina il programma, le altre eseguono l'operazione corrispondente. */
 
 gestisci_scelta(7, _) :- nl, write('Arrivederci!'), nl.
 gestisci_scelta(Scelta, Conti) :- Scelta \= 7,
@@ -150,7 +153,7 @@ leggi_scelta(Conti, Scelta) :- stampa_menu(Conti),
                                leggi_scelta_operazione(Conti, Scelta).
 
 /* Il predicato stampa_menu stampa il menu delle operazioni e i conti disponibili con cui operare:
-   - il suo unico argomento è la lista dei conti corrente */
+   - il suo unico argomento è la lista dei conti corrente. */
 
 stampa_menu(Conti) :- nl,
                       write('--- MENU ---'), nl,
@@ -165,8 +168,8 @@ stampa_menu(Conti) :- nl,
                       stampa_conti_rapidi(Conti), nl.
 
 /* Il predicato leggi_scelta_operazione legge la scelta dell'utente:
-   - il suo primo argomento è la lista dei conti corrente
-   - il suo secondo argomento (nel risultato) è il numero della scelta valida effettuata */
+   - il suo primo argomento è la lista dei conti corrente;
+   - il suo secondo argomento (nel risultato) è il numero della scelta valida effettuata. */
 
 leggi_scelta_operazione(Conti, Scelta) :- write('Scegli operazione (digita 1-7): '),
                                           read(Scelta),
@@ -297,7 +300,7 @@ genera_numero_sequenziale(Conti, Tentativo, Num) :- Tentativo < 10000,
 /* Il predicato filtra_per_saldo restituisce la lista dei conti con saldo maggiore della soglia:
    - il suo primo argomento è la soglia;
    - il suo secondo argomento è la lista dei conti;
-   - il suo terzo argomento è la lista dei conti filtrati. */
+   - il suo terzo argomento (nel risultato) è la lista dei conti filtrati. */
 
 filtra_per_saldo(S, [], []) :- S >= 0.
 filtra_per_saldo(S, [C | Rest], [C | FiltratiRest]) :- S >= 0,
@@ -324,7 +327,7 @@ valido_intestatario(Atom) :- atom(Atom),
 is_lettera(C) :- C >= 65, C =< 90.
 is_lettera(C) :- C >= 97, C =< 122.
 
-/* Il predicato cerca_conto cerca un conto per numero all'interno della lista Conti:
+/* Il predicato cerca_conto cerca un conto per numero all'interno della lista:
    - il suo primo argomento è il numero del conto da cercare;
    - il suo secondo argomento è la lista dei conti in cui cercare;
    - il suo terzo argomento (nel risultato) è il conto trovato;

@@ -93,7 +93,7 @@ esegui(2, Conti, ContiNuovi) :- nl,
                                 saldo(Num, Conti, Saldo),
                                 gestisci_prelievo(Saldo, Num, Conti, ContiNuovi).
 /* Operazione 3: Bonifico */
-esegui(3, Conti, ContiNuovi) :- length(Conti, N),
+esegui(3, Conti, Conti) :- length(Conti, N),
                                 N =:= 1,
                                 write('ERRORE: impossibile eseguire bonifico con un solo conto.'), nl.                                
 esegui(3, Conti, ContiNuovi) :- nl, 

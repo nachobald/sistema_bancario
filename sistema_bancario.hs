@@ -84,6 +84,16 @@ stampaStorico [] = return ()
 stampaStorico (Trans imp tipo : rest) = do printf "  - %s: %.2f euro\n" (mostraTipo tipo) imp
                                            stampaStorico rest
 
+{- La funzione mostraTipo converte un tipo di transazione in stringa:
+   - il suo unico argomento è il tipo di transazione;
+   - il suo secondo argomento (nel risultato) è la stringa corrispondente. -}
+
+mostraTipo :: Tipo -> String
+mostraTipo Deposito        = "deposito"
+mostraTipo Prelievo        = "prelievo"
+mostraTipo BonificoUscita  = "bonifico_uscita"
+mostraTipo BonificoEntrata = "bonifico_entrata"
+
 {- La funzione stampaRisultatoFiltro stampa l'elenco dei conti con saldo superiore alla soglia:
    - il suo unico argomento è la lista dei conti da stampare. -}
 
@@ -332,32 +342,6 @@ creaConti n contatore contiAcc = do printf "Inserisci l'intestatario del conto n
                                     numero <- generaNumeroCasuale contiAcc
                                     let nuovoConto = Conto numero intestatario 0 []
                                     creaConti (n - 1) (contatore + 1) (nuovoConto : contiAcc)
-
-
-
-
-
-{- La funzione mostraTipo converte un tipo di transazione in stringa:
-   - il suo unico argomento è il tipo di transazione
-   - il risultato è la stringa corrispondente -}
-
-mostraTipo :: Tipo -> String
-mostraTipo Deposito        = "deposito"
-mostraTipo Prelievo        = "prelievo"
-mostraTipo BonificoUscita  = "bonifico_uscita"
-mostraTipo BonificoEntrata = "bonifico_entrata"
-
-
-
-
-
-
-
-
-
-
-
-
 
 {- La funzione generaNumeroCasuale genera un numero di conto casuale non ancora usato:
    - il suo argomento è la lista dei conti esistenti;

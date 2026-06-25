@@ -198,7 +198,7 @@ leggi_importo_valido(Messaggio, Massimo, Importo) :- write(Messaggio),
                                                      read(Importo),
                                                      number(Importo),
                                                      Importo > 0,
-                                                     Importo < Massimo, !.
+                                                     Importo =< Massimo, !.
 leggi_importo_valido(Messaggio, Massimo, Importo) :- format('ERRORE: inserire un valore maggiore di 0 e minore di ~2f.~n', [Massimo]),
                                                      leggi_importo_valido(Messaggio, Massimo, Importo).
 

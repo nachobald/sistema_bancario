@@ -120,7 +120,7 @@ gestisciScelta scelta conti = do contiNuovi <- esegui scelta conti
                                  menu contiNuovi
 
 {- La funzione esegui esegue l'operazione corrispondente alla scelta dell'utente:
-   - il primo argomento è il numero dell'operazione (1-7);
+   - il primo argomento è il numero dell'operazione (1-6);
    - il secondo argomento è la lista dei conti corrente;
    - il suo terzo argomento (nel risultato) è la lista dei conti aggiornata.
    Le operazioni 4, 5 e 6 sono di sola lettura e lasciano invariata la lista. -}
@@ -233,7 +233,7 @@ stampaMenu conti = do putStrLn ""
 
 {- La funzione leggiSceltaOperazione legge la scelta dell'utente:
    - il suo primo argomento è la lista dei conti corrente;
-   - il suo secondo argomento (nel risultato)è il numero della scelta valida effettuata. -}
+   - il suo secondo argomento (nel risultato) è il numero della scelta valida effettuata. -}
 
 leggiSceltaOperazione :: [Conto] -> IO Int
 leggiSceltaOperazione conti = do putStr "Scegli operazione (digita 1-7): "
@@ -384,7 +384,7 @@ generaNumeroCasualeFallback conti min num | not (esisteConto num conti) = return
 
 {- La funzione ultimoNumero restituisce il numero più alto tra i conti esistenti:
    - il suo unico argomento è la lista dei conti.
-   Se non ci sono conti, restituisce 999 (così il primo conto parte da 1000) -}
+   Se non ci sono conti, restituisce 999 (così il primo conto parte da 1000). -}
 
 ultimoNumero :: [Conto] -> Int
 ultimoNumero [] = 999

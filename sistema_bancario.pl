@@ -81,7 +81,7 @@ gestisci_scelta(Scelta, Conti) :- Scelta \= 7,
                                   menu(ContiNuovi).
 
 /* Il predicato esegui esegue l'operazione corrispondente alla scelta dell'utente:
-   - il suo primo argomento è il numero dell'operazione (1-7);
+   - il suo primo argomento è il numero dell'operazione (1-6);
    - il suo secondo argomento è la lista dei conti corrente;
    - il suo terzo argomento (nel risultato) è la lista dei conti aggiornata.
    Le operazioni 4, 5 e 6 sono di sola lettura e lasciano invariata la lista. */

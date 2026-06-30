@@ -36,16 +36,17 @@ stampa_conti_dettaglio([conto(Num, Int, Saldo, _) | Rest]) :- format('  - Conto 
 
 /* Il predicato stampa_conti_rapidi stampa un riepilogo essenziale dei conti utili per le operazioni:
    - il suo unico argomento è la lista dei conti da stampare.
-   Dopo 5 conti va a capo per una migliore leggibilità. */
+   La stampa avviene mantenendo un contatore interno; dopo 5 conti va a capo,
+   altrimenti separa i conti con quattro spazi. */
 
 stampa_conti_rapidi(Conti) :- stampa_conti_rapidi(Conti, 1).
 stampa_conti_rapidi([], _) :- nl.
-stampa_conti_rapidi([conto(Num, Int, _, _)], _) :- format('[~w|~w]', [Num, Int]), nl.
 stampa_conti_rapidi([conto(Num, Int, _, _) | Rest], Contatore) :- Contatore mod 5 =:= 0,
                                                                   format('[~w|~w]', [Num, Int]), nl,
                                                                   NuovoContatore is Contatore + 1,
                                                                   stampa_conti_rapidi(Rest, NuovoContatore).
-stampa_conti_rapidi([conto(Num, Int, _, _) | Rest], Contatore) :- format('[~w|~w]\t', [Num, Int]),
+stampa_conti_rapidi([conto(Num, Int, _, _) | Rest], Contatore) :- format('[~w|~w]', [Num, Int]),
+                                                                  write('    '),
                                                                   NuovoContatore is Contatore + 1,
                                                                   stampa_conti_rapidi(Rest, NuovoContatore).
 

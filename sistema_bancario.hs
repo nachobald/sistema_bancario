@@ -61,18 +61,16 @@ stampaContiDettaglio (Conto num int saldo _ : rest) = do printf "  - Conto %d (%
 stampaContiRapidi :: [Conto] -> IO ()
 stampaContiRapidi conti = stampaContiRapidiAux conti 1
 
-
 {- La funzione stampaContiRapidiAux è una funzione ausiliaria che stampa i conti mantenendo un contatore:
    - il suo primo argomento è la lista dei conti da stampare;
    - il suo secondo argomento è il contatore che tiene traccia del numero di conti stampati.
-   Questa funzione è necessaria per sapere quando è stato raggiunto il quinto conto e andare a capo. -}
+   Dopo 5 conti va a capo; altrimenti separa i conti con quattro spazi. -}
 
 stampaContiRapidiAux :: [Conto] -> Int -> IO ()
 stampaContiRapidiAux [] _ = putStrLn ""
-stampaContiRapidiAux [Conto num int _ _] _ = printf "[%d|%s]\n" num int
 stampaContiRapidiAux (Conto num int _ _ : rest) contatore | contatore `mod` 5 == 0 = do printf "[%d|%s]\n" num int
                                                                                         stampaContiRapidiAux rest (contatore + 1)
-                                                          | otherwise              = do printf "[%d|%s]\t" num int
+                                                          | otherwise              = do printf "[%d|%s]    " num int
                                                                                         stampaContiRapidiAux rest (contatore + 1)
 
 {- La funzione stampaStorico stampa l'elenco delle transazioni di un conto:

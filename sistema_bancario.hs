@@ -345,7 +345,7 @@ creaConti n contatore contiAcc = do printf "Inserisci l'intestatario del conto n
 
 {- La funzione ultimoNumero restituisce il numero più alto tra i conti esistenti:
    - il suo unico argomento è la lista dei conti.
-   Se non ci sono conti, restituisce 999 -}
+   Se non ci sono conti, restituisce 999 (così il primo conto parte da 1000). -}
 
 ultimoNumero :: [Conto] -> Int
 ultimoNumero [] = 999
@@ -355,19 +355,17 @@ ultimoNumero conti = maximum [n | Conto n _ _ _ <- conti]
    - il suo unico argomento è la lista dei conti esistenti;
    - il risultato è il numero generato.
    Se non ci sono conti, genera un numero casuale tra 1000 e 8999.
-   Se ci sono già conti, genera il numero successivo -}
+   Se ci sono già conti, genera il numero successivo (ultimo + 1). -}
 
 generaNumeroCasuale :: [Conto] -> IO Int
-generaNumeroCasuale [] = do
-                           tempo <- getPOSIXTime
-                           let seed = floor (tempo * 1000000)
-                              nextRand = (seed * 1103515245 + 12345) `mod` 2^31
-                              num = 1000 + (nextRand `mod` 8000)  -- range 1000-8999
-                           return num
+generaNumeroCasuale [] = do tempo <- getPOSIXTime
+                            let seed = floor (tempo * 1000000)
+                                nextRand = (seed * 1103515245 + 12345) `mod` 2^31
+                                num = 1000 + (nextRand `mod` 8000)
+                            return num
 
-generaNumeroCasuale conti = do
-                              let ultimo = ultimoNumero conti
-                              return (ultimo + 1)
+generaNumeroCasuale conti = do let ultimo = ultimoNumero conti
+                               return (ultimo + 1)
 
 {- La funzione filtraPerSaldo restituisce la lista dei conti con saldo maggiore della soglia:
    - il primo argomento è la soglia;

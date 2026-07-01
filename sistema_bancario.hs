@@ -342,24 +342,57 @@ creaConti n contatore contiAcc = do printf "Inserisci l'intestatario del conto n
                                     let nuovoConto = Conto numero intestatario 0 []
                                     creaConti (n - 1) (contatore + 1) (nuovoConto : contiAcc)
 
-{- La funzione generaNumeroCasuale genera un numero di conto:
+{- La funzione generaNumeroCasuale genera un numero di conto casuale non ancora usato:
    - il suo unico argomento è la lista dei conti esistenti;
-   - il suo secondo argomento (nel risultato) è il numero generato.
-   Se l'ultimo numero assegnato è minore di 8999 genera un nuovo numero casuale
-   strettamente maggiore del precedente; altrimenti continua la numerazione in modo sequenziale. -}
+   - il risultato è il numero generato.
+   I numeri generati sono in ordine crescente: ogni nuovo conto ha un numero maggiore del precedente. -}
 
 generaNumeroCasuale :: [Conto] -> IO Int
-generaNumeroCasuale conti
-    | ultimo >= 8999 = return (ultimo + 1)
-    | otherwise = do
-        let minimo = ultimo + 1
-        tempo <- getPOSIXTime
-        let seed = floor (tempo * 1000000)
-            nextRand = (seed * 1103515245 + 12345) `mod` (2^31)
-            num = minimo + (nextRand `mod` (9000 - minimo))
-        return num
-  where
-    ultimo = ultimoNumero conti
+generaNumeroCasuale conti | min >= 9000 = return (generaNumeroSequenziale conti min)
+                          | otherwise   = do
+                             tempo <- getPOSIXTime
+                             let seed = floor (tempo * 1000000)
+                                 nextRand = (seed * 1103515245 + 12345) `mod` 2^31
+                                 num = min + (nextRand `mod` (9000 - min))
+                             generaNumeroCasualeAux conti min num
+                       where
+                          ultimo = ultimoNumero conti
+                          min = ultimo + 1
+
+{- La funzione generaNumeroCasualeAux è una funzione ausiliaria che tenta un secondo numero casuale:
+   - il suo primo argomento è la lista dei conti esistenti;
+   - il suo secondo argomento è il valore minimo consentito;
+   - il suo terzo argomento è il numero da verificare.
+   Se il numero è libero lo restituisce, altrimenti tenta con un secondo numero basato sul tempo. -}
+
+generaNumeroCasualeAux :: [Conto] -> Int -> Int -> IO Int
+generaNumeroCasualeAux conti min num | not (esisteConto num conti) = return num
+                                     | otherwise                   = do tempo <- getPOSIXTime
+                                                                        let seed = floor (tempo * 1000000 + 1)
+                                                                            nextRand = (seed * 1103515245 + 12345) `mod` 2^31
+                                                                            num2 = min + (nextRand `mod` (9000 - min))
+                                                                        generaNumeroCasualeFallback conti min num2
+
+{- La funzione generaNumeroCasualeFallback è una funzione ausiliaria che usa il fallback sequenziale:
+   - il suo primo argomento è la lista dei conti esistenti;
+   - il suo secondo argomento è il valore minimo consentito;
+   - il suo terzo argomento è il numero da verificare.
+   Se il numero è libero lo restituisce, altrimenti usa il generatore sequenziale. -}
+
+generaNumeroCasualeFallback :: [Conto] -> Int -> Int -> IO Int
+generaNumeroCasualeFallback conti min num | not (esisteConto num conti) = return num
+                                          | otherwise                   = return (generaNumeroSequenziale conti min)
+
+{- La funzione generaNumeroSequenziale genera un numero di conto sequenziale non ancora usato (fallback):
+   - il suo primo argomento è la lista dei conti esistenti;
+   - il suo secondo argomento è il tentativo corrente (minimo consentito);
+   - il risultato è il numero generato.
+   Viene usata come ultima risorsa quando i numeri casuali generati sono tutti occupati. -}
+
+generaNumeroSequenziale :: [Conto] -> Int -> Int
+generaNumeroSequenziale conti tentativo | tentativo < 9999 && not (esisteConto tentativo conti) = tentativo
+                                        | tentativo < 9999 = generaNumeroSequenziale conti (tentativo + 1)
+                                        | otherwise        = 9999
 
 {- La funzione ultimoNumero restituisce il numero più alto tra i conti esistenti:
    - il suo unico argomento è la lista dei conti.

@@ -281,19 +281,14 @@ crea_conti(N, Contatore, ContiAcc, ContiFinali) :- N > 0,
                                                    crea_conti(N1, Contatore1, [NuovoConto | ContiAcc], ContiFinali).
 
 /* Il predicato ultimo_numero restituisce il numero più alto tra i conti esistenti:
-   - il suo unico argomento è la lista dei conti.
+   - il suo primo argomento è la lista dei conti;
+   - il suo secondo argomento (nel risultato) è il numero massimo.
    Se non ci sono conti, restituisce 999 (così il primo conto parte da 1000). */
 
 ultimo_numero([], 999).
-ultimo_numero(Conti, Ultimo) :- max_numero(Conti, Ultimo).
-
-/* Il predicato max_numero calcola il massimo tra i numeri di conto:
-   - il suo primo argomento è la lista dei conti;
-   - il suo secondo argomento (nel risultato) è il numero massimo. */
-
-max_numero([conto(Num, _, _, _)], Num).
-max_numero([conto(Num1, _, _, _) | Rest], Max) :- max_numero(Rest, MaxRest),
-                                                  Max is max(Num1, MaxRest).
+ultimo_numero([conto(Num, _, _, _)], Num).
+ultimo_numero([conto(Num1, _, _, _) | Rest], Max) :- ultimo_numero(Rest, MaxRest),
+                                                     Max is max(Num1, MaxRest).
 
 /* Il predicato genera_numero_casuale genera un numero di conto casuale non ancora usato:
    - il suo primo argomento è la lista dei conti esistenti;
@@ -302,30 +297,71 @@ max_numero([conto(Num1, _, _, _) | Rest], Max) :- max_numero(Rest, MaxRest),
 
 genera_numero_casuale(Conti, Num) :- ultimo_numero(Conti, Ultimo),
                                      Min is Ultimo + 1,
-                                     Max is 9999,
-                                     Diff is Max - Min,
-                                     Diff > 0,
-                                     random(0, Diff, R),
-                                     Num is Min + R,
-                                     \+ esiste_conto(Num, Conti), !.
+                                     genera_numero_casuale(Conti, Min, Num).
 
-genera_numero_casuale(Conti, Num) :- ultimo_numero(Conti, Ultimo),
-                                     genera_numero_sequenziale(Conti, Ultimo + 1, Num).
+genera_numero_casuale(Conti, Min, Num) :- Min >= 9000,
+                                          genera_numero_sequenziale(Conti, Min, Num), !.
 
-/* Il predicato genera_numero_sequenziale genera un numero di conto
-   sequenziale non ancora usato (fallback):
+genera_numero_casuale(Conti, Min, Num) :- Min < 9000,
+                                          genera_numero_casuale_aux(Conti, Min, Num), !.
+
+/* Il predicato genera_numero_casuale_aux è un predicato ausiliario che tenta il primo numero casuale:
+   - il suo primo argomento è la lista dei conti esistenti;
+   - il suo secondo argomento è il valore minimo consentito;
+   - il suo terzo argomento (nel risultato) è il numero generato.
+   Calcola un range valido e genera un numero casuale; se è libero lo restituisce,
+   altrimenti passa al fallback per un secondo tentativo. */
+
+genera_numero_casuale_aux(Conti, Min, Num) :- Diff is 9000 - Min,
+                                              Diff > 0,
+                                              random(0, Diff, R),
+                                              Num1 is Min + R,
+                                              \+ esiste_conto(Num1, Conti),
+                                              Num = Num1, !.
+
+genera_numero_casuale_aux(Conti, Min, Num) :- genera_numero_casuale_fallback(Conti, Min, Num), 
+                                              !.
+
+/* Il predicato genera_numero_casuale_fallback è un predicato ausiliario che tenta il secondo numero casuale:
+   - il suo primo argomento è la lista dei conti esistenti;
+   - il suo secondo argomento è il valore minimo consentito;
+   - il suo terzo argomento (nel risultato) è il numero generato.
+   Se il numero è libero lo restituisce, altrimenti usa il generatore sequenziale come ultima risorsa. */
+
+genera_numero_casuale_fallback(Conti, Min, Num) :- Diff is 9000 - Min,
+                                                   Diff > 0,
+                                                   random(0, Diff, R),
+                                                   Num2 is Min + R,
+                                                   \+ esiste_conto(Num2, Conti),
+                                                   Num = Num2, 
+                                                   !.
+
+genera_numero_casuale_fallback(Conti, Min, Num) :- genera_numero_sequenziale(Conti, Min, Num), 
+                                                   !.
+
+/* Il predicato genera_numero_sequenziale genera un numero di conto sequenziale non ancora usato:
    - il suo primo argomento è la lista dei conti esistenti;
    - il suo secondo argomento è il tentativo corrente (minimo consentito);
-   - il suo terzo argomento (nel risultato) è il numero generato. 
+   - il suo terzo argomento (nel risultato) è il numero generato.
    Viene usata come ultima risorsa quando i numeri casuali generati sono tutti occupati. */
-
 genera_numero_sequenziale(Conti, Tentativo, Num) :- Tentativo < 9999,
                                                     \+ esiste_conto(Tentativo, Conti),
                                                     Num = Tentativo, !.
+
 genera_numero_sequenziale(Conti, Tentativo, Num) :- Tentativo < 9999,
                                                     esiste_conto(Tentativo, Conti),
                                                     Prossimo is Tentativo + 1,
-                                                    genera_numero_sequenziale(Conti, Prossimo, Num).
+                                                    genera_numero_sequenziale(Conti, Prossimo, Num), !.
+
+genera_numero_sequenziale(_, 9999, 9999)         :- !.
+
+/* Il predicato max_numero calcola il massimo tra i numeri di conto:
+   - il suo primo argomento è la lista dei conti;
+   - il suo secondo argomento (nel risultato) è il numero massimo. */
+
+max_numero([conto(Num, _, _, _)], Num).
+max_numero([conto(Num1, _, _, _) | Rest], Max) :- max_numero(Rest, MaxRest),
+                                                  Max is max(Num1, MaxRest).
 
 /* Il predicato filtra_per_saldo restituisce la lista dei conti con saldo maggiore della soglia:
    - il suo primo argomento è la soglia;

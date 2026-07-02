@@ -297,7 +297,7 @@ ultimo_numero([conto(Num1, _, _, _) | Rest], Max) :- ultimo_numero(Rest, MaxRest
    Se ci sono già conti, genera il numero successivo (ultimo + 1). */
 
 genera_numero_casuale(Conti, Num) :- Conti = [],
-                                     random(1000, 9000, Num), !.
+                                     random(1000, 9001, Num), !.
 
 genera_numero_casuale(Conti, Num) :- Conti \= [],
                                      ultimo_numero(Conti, Ultimo),

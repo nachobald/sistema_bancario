@@ -1,7 +1,6 @@
 {- Programma Haskell per la gestione di un sistema bancario semplice. -}
 
 import Data.Char (isAlpha)                   -- necessario per usare isAlpha, che verifica se un carattere è una lettera
-import Data.Maybe()                          -- necessario per usare fromJust, che estrae il valore da Maybe
 import Text.Printf                           -- necessario per usare printf, che formatta i numeri con due decimali
 import Text.Read (readMaybe)                 -- necessario per usare readMaybe, che legge un valore in modo sicuro
 import Data.Time.Clock.POSIX (getPOSIXTime)  -- necessario per usare getPOSIXTime, che genera numeri casuali basati sul tempo
@@ -361,9 +360,8 @@ generaNumeroCasuale :: [Conto] -> IO Int
 generaNumeroCasuale [] = do tempo <- getPOSIXTime
                             let seed = floor (tempo * 1000000)
                                 nextRand = (seed * 1103515245 + 12345) `mod` 2^31
-                                num = 1000 + (nextRand `mod` 8000)
+                                num = 1000 + (nextRand `mod` 8001)
                             return num
-
 generaNumeroCasuale conti = do let ultimo = ultimoNumero conti
                                return (ultimo + 1)
 
